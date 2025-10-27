@@ -77,7 +77,7 @@
         var loadingBar = document.querySelector("#unity-loading-bar");
         var progressBarFull = document.querySelector("#unity-progress-bar-full");
 
-        var buildUrl = "Build";
+        var buildUrl = "/Build";
         var loaderUrl = buildUrl + "/Web.loader.js";
         var config = {
             dataUrl: buildUrl + "/Web.data",
@@ -89,6 +89,13 @@
             productVersion: "1.0",
             showBanner: false,
         };
+
+        // Function to check if Unity files exist
+        function checkUnityFiles() {
+            return fetch(loaderUrl, { method: 'HEAD' })
+                .then(response => response.ok)
+                .catch(() => false);
+        }
 
         if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
             container.className = "unity-mobile";
@@ -105,37 +112,82 @@
             window.parent.postMessage({ type: 'UNITY_LOADING_START' }, '*');
         }
 
-        var script = document.createElement("script");
-        script.src = loaderUrl;
-        script.onload = () => {
-            createUnityInstance(canvas, config, (progress) => {
-                progressBarFull.style.width = 100 * progress + "%";
-                // Send progress updates to parent
-                if (window.parent !== window) {
-                    window.parent.postMessage({ 
-                        type: 'UNITY_LOADING_PROGRESS', 
-                        progress: progress 
-                    }, '*');
-                }
-            }).then((unityInstance) => {
+        // Check if Unity files exist before loading
+        checkUnityFiles().then(filesExist => {
+            if (!filesExist) {
+                console.error('Unity loader not found at:', loaderUrl);
                 loadingBar.style.display = "none";
-                window.unityInstance = unityInstance;
-                // Notify parent that Unity has finished loading
-                if (window.parent !== window) {
-                    window.parent.postMessage({ type: 'UNITY_LOADING_COMPLETE' }, '*');
-                }
-            }).catch((message) => {
-                // Notify parent of loading error
+                container.innerHTML = '<div style="color: white; text-align: center; padding: 50px;"><h3>Unity Game Not Available</h3><p>Unity build files are missing. Please contact the administrator.</p></div>';
+                
                 if (window.parent !== window) {
                     window.parent.postMessage({ 
                         type: 'UNITY_LOADING_ERROR', 
-                        error: message 
+                        error: 'Unity files not found on server' 
                     }, '*');
                 }
-                alert(message);
-            });
-        };
-        document.body.appendChild(script);
+                return;
+            }
+
+            var script = document.createElement("script");
+            script.src = loaderUrl;
+            script.onerror = (error) => {
+                console.error('Failed to load Unity loader:', error);
+                loadingBar.style.display = "none";
+                container.innerHTML = '<div style="color: white; text-align: center; padding: 50px;"><h3>Unity Loading Error</h3><p>Failed to load Unity game files.</p></div>';
+                
+                if (window.parent !== window) {
+                    window.parent.postMessage({ 
+                        type: 'UNITY_LOADING_ERROR', 
+                        error: 'Failed to load Unity loader script' 
+                    }, '*');
+                }
+            };
+            script.onload = () => {
+                if (typeof createUnityInstance === 'undefined') {
+                    console.error('createUnityInstance is not defined after loading script');
+                    loadingBar.style.display = "none";
+                    container.innerHTML = '<div style="color: white; text-align: center; padding: 50px;"><h3>Unity Error</h3><p>Unity loader script is invalid.</p></div>';
+                    
+                    if (window.parent !== window) {
+                        window.parent.postMessage({ 
+                            type: 'UNITY_LOADING_ERROR', 
+                            error: 'createUnityInstance is not defined' 
+                        }, '*');
+                    }
+                    return;
+                }
+
+                createUnityInstance(canvas, config, (progress) => {
+                    progressBarFull.style.width = 100 * progress + "%";
+                    // Send progress updates to parent
+                    if (window.parent !== window) {
+                        window.parent.postMessage({ 
+                            type: 'UNITY_LOADING_PROGRESS', 
+                            progress: progress 
+                        }, '*');
+                    }
+                }).then((unityInstance) => {
+                    loadingBar.style.display = "none";
+                    window.unityInstance = unityInstance;
+                    // Notify parent that Unity has finished loading
+                    if (window.parent !== window) {
+                        window.parent.postMessage({ type: 'UNITY_LOADING_COMPLETE' }, '*');
+                    }
+                }).catch((message) => {
+                    // Notify parent of loading error
+                    if (window.parent !== window) {
+                        window.parent.postMessage({ 
+                            type: 'UNITY_LOADING_ERROR', 
+                            error: message 
+                        }, '*');
+                    }
+                    console.error('Unity loading failed:', message);
+                    loadingBar.style.display = "none";
+                    container.innerHTML = '<div style="color: white; text-align: center; padding: 50px;"><h3>Unity Loading Failed</h3><p>' + message + '</p></div>';
+                });
+            };
+            document.body.appendChild(script);
+        });
     </script>
 </body>
 </html>

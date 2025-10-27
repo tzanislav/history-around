@@ -25,11 +25,40 @@ if (fs.existsSync(publicPath)) {
 // API Routes (you can add your API endpoints here)
 app.get('/api/health', (req, res) => {
     const publicExists = fs.existsSync(publicPath);
+    const unityBuildPath = path.join(publicPath, 'Build');
+    const unityBuildExists = fs.existsSync(unityBuildPath);
+    const unityFiles = unityBuildExists ? fs.readdirSync(unityBuildPath) : [];
+    
     res.json({ 
         message: 'History Around API is running!', 
         timestamp: new Date().toISOString(),
         reactBuildExists: publicExists,
+        unityBuildExists: unityBuildExists,
+        unityFiles: unityFiles,
         environment: process.env.NODE_ENV || 'development'
+    });
+});
+
+// Debug endpoint to check Unity files
+app.get('/api/unity-status', (req, res) => {
+    const unityBuildPath = path.join(publicPath, 'Build');
+    const requiredFiles = ['Web.loader.js', 'Web.framework.js', 'Web.data', 'Web.wasm'];
+    const fileStatus = {};
+    
+    requiredFiles.forEach(file => {
+        const filePath = path.join(unityBuildPath, file);
+        fileStatus[file] = {
+            exists: fs.existsSync(filePath),
+            path: filePath,
+            url: `/Build/${file}`
+        };
+    });
+    
+    res.json({
+        message: 'Unity build file status',
+        buildPath: unityBuildPath,
+        files: fileStatus,
+        allFilesExist: requiredFiles.every(file => fileStatus[file].exists)
     });
 });
 
