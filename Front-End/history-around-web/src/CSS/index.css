@@ -59,3 +59,21 @@ h1, h2, h3, h4, h5, h6 {
 p {
   margin: 0;
 }
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  border: none;
+  background: rgb(233, 233, 233);
+  color: rgb(22, 22, 22);
+  padding: 10px 30px;
+  margin: 10px 0;
+  font-size: 12px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background: rgb(109, 22, 22);
+}
