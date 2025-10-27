@@ -25,9 +25,24 @@ echo "📋 Copying React build to Back-End..."
 cd ../../Back-End
 npm run copy-build
 
-echo "🎯 Starting server..."
+echo "� Checking Unity build files..."
+if [ ! -f "public/Build/Web.data" ] || [ ! -f "public/Build/Web.wasm" ]; then
+    echo "⚠️  Warning: Large Unity files (Web.data, Web.wasm) not found!"
+    echo "   These files are excluded from git due to size limits."
+    echo "   Please upload your Unity WebGL build manually to:"
+    echo "   - public/Build/Web.data"
+    echo "   - public/Build/Web.wasm"
+    echo ""
+    echo "   Or rebuild Unity and copy files:"
+    echo "   1. Build your Unity project for WebGL"
+    echo "   2. Copy Web.data and Web.wasm to public/Build/"
+    echo ""
+fi
+
+echo "�🎯 Starting server..."
 echo "📱 Your app will be available at: http://your-server-ip:5000"
 echo "🔧 API health check: http://your-server-ip:5000/api/health"
+echo "🎮 Unity status: http://your-server-ip:5000/api/unity-status"
 echo ""
 echo "To run in background (daemon mode):"
 echo "  npm install -g pm2"

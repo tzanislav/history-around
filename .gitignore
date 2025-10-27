@@ -16,12 +16,14 @@ Front-End/history-around-web/.env.production.local
 
 # Back-End
 Back-End/node_modules/
-Back-End/public/
+Back-End/public/Build/Web.data
+Back-End/public/Build/Web.wasm
 Back-End/.env
 Back-End/logs/
 
-# Build outputs
-build/
+# Build outputs (exclude Unity Build folder)
+**/build/
+!Back-End/public/Build/
 dist/
 *.tgz
 *.tar.gz

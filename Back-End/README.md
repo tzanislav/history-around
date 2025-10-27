@@ -93,8 +93,24 @@ chmod +x deploy.sh
 cd Back-End
 npm run deploy
 
-# 2. Start server
+# 2. Upload Unity files (if missing)
+# Copy Web.data and Web.wasm to Back-End/public/Build/
+
+# 3. Start server
 npm start
+```
+
+### Unity Files Note
+Due to GitHub's 100MB file size limit, the large Unity files (`Web.data` and `Web.wasm`) are not included in the repository. You need to upload them manually:
+
+```bash
+# On your EC2 server, copy your Unity build files:
+scp Web.data your-server:/path/to/project/Back-End/public/Build/
+scp Web.wasm your-server:/path/to/project/Back-End/public/Build/
+
+# Or rebuild Unity and copy locally:
+# 1. Build Unity project for WebGL
+# 2. Copy Web.data and Web.wasm to Back-End/public/Build/
 ```
 
 ### Production with PM2
