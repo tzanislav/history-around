@@ -1,0 +1,40 @@
+.header
+{
+    margin: 0;
+    background-color: #5a1717;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;   
+}
+/* Navigation Bar */
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.nav-link {
+    background-color: #008bba00;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 12px;
+    transition-duration: 0.4s;
+}
+
+.nav-link:hover {
+    color: black;
+    text-decoration: overline;
+
+}
+
