@@ -77,3 +77,46 @@ app.get('/api/your-endpoint', (req, res) => {
 ```
 
 All API routes should start with `/api/` to avoid conflicts with React routing.
+
+## 🌐 EC2 Server Deployment
+
+### Quick Deploy (Recommended)
+```bash
+# From project root directory
+chmod +x deploy.sh
+./deploy.sh
+```
+
+### Manual Deployment Steps
+```bash
+# 1. Install dependencies and build
+cd Back-End
+npm run deploy
+
+# 2. Start server
+npm start
+```
+
+### Production with PM2
+```bash
+# Install PM2 globally
+sudo npm install -g pm2
+
+# Start with PM2
+pm2 start server.js --name history-around
+
+# Auto-start on boot
+pm2 startup
+pm2 save
+```
+
+## 🐛 Troubleshooting EC2 Issues
+
+### "ENOENT: no such file or directory" Error
+This means React build files are missing. Run:
+```bash
+npm run deploy
+```
+
+### Check Server Status
+Visit: `http://your-server-ip:5000/api/health`

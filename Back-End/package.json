@@ -7,7 +7,8 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "build": "echo \"Building React app...\" && cd ../Front-End/history-around-web && npm run build && cd ../../Back-End && npm run copy-build",
-    "copy-build": "xcopy \"..\\Front-End\\history-around-web\\dist\\*\" \"public\\\" /E /I /Y",
+    "copy-build": "node copy-build.js",
+    "deploy": "npm install && cd ../Front-End/history-around-web && npm install && npm run build && cd ../../Back-End && npm run copy-build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": ["express", "react", "history", "web-app"],

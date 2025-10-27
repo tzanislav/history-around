@@ -10,14 +10,26 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from the React app build
-app.use(express.static(path.join(__dirname, 'public')));
+// Check if public directory exists
+const publicPath = path.join(__dirname, 'public');
+const fs = require('fs');
+
+// Serve static files from the React app build (if it exists)
+if (fs.existsSync(publicPath)) {
+    app.use(express.static(publicPath));
+    console.log('✅ Serving React app from public/ directory');
+} else {
+    console.log('⚠️  React build not found. Run "npm run build" to build the React app.');
+}
 
 // API Routes (you can add your API endpoints here)
 app.get('/api/health', (req, res) => {
+    const publicExists = fs.existsSync(publicPath);
     res.json({ 
         message: 'History Around API is running!', 
-        timestamp: new Date().toISOString() 
+        timestamp: new Date().toISOString(),
+        reactBuildExists: publicExists,
+        environment: process.env.NODE_ENV || 'development'
     });
 });
 
@@ -35,7 +47,24 @@ app.use((req, res, next) => {
     if (req.path.startsWith('/api/')) {
         return next();
     }
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    
+    // Check if React build exists
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        // React build not found - provide helpful message
+        res.status(404).json({
+            error: 'React app not built',
+            message: 'Please run "npm run build" to build the React application',
+            instructions: [
+                '1. Navigate to the project root directory',
+                '2. Run: npm run build (in Back-End folder)',
+                '3. This will build React and copy files to public/',
+                '4. Restart the server'
+            ]
+        });
+    }
 });
 
 // Error handling middleware
