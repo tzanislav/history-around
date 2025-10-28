@@ -10,41 +10,13 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Configure MIME types for Unity files
-express.static.mime.define({
-    'application/wasm': ['wasm'],
-    'application/octet-stream': ['data', 'unityweb'],
-    'application/javascript': ['js'],
-    'application/gzip': ['gz']
-});
-
 // Check if public directory exists
 const publicPath = path.join(__dirname, 'public');
 const fs = require('fs');
 
 // Serve static files from the React app build (if it exists)
 if (fs.existsSync(publicPath)) {
-    // Set proper headers for Unity files
-    app.use('/Build', (req, res, next) => {
-        if (req.path.endsWith('.wasm')) {
-            res.set('Content-Type', 'application/wasm');
-        } else if (req.path.endsWith('.data')) {
-            res.set('Content-Type', 'application/octet-stream');
-        } else if (req.path.endsWith('.js')) {
-            res.set('Content-Type', 'application/javascript');
-        }
-        next();
-    });
-    
-    app.use(express.static(publicPath, {
-        setHeaders: (res, path) => {
-            if (path.endsWith('.wasm')) {
-                res.set('Content-Type', 'application/wasm');
-            } else if (path.endsWith('.data')) {
-                res.set('Content-Type', 'application/octet-stream');
-            }
-        }
-    }));
+    app.use(express.static(publicPath));
     console.log('✅ Serving React app from public/ directory');
 } else {
     console.log('⚠️  React build not found. Run "npm run build" to build the React app.');

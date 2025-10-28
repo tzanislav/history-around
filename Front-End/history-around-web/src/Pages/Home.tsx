@@ -10,7 +10,13 @@ const Home: React.FC = () => {
     return (
         <div className="home-container">
             <WelcomeSplash unityLoader={unityLoader} />
-            <UnityPlayer />
+            {/* UnityPlayer with auto-resize enabled (default) */}
+            <UnityPlayer autoResize={true} />
+            
+            {/* Alternative usage examples:
+            <UnityPlayer width={800} height={600} autoResize={false} />
+            <UnityPlayer width={1920} height={1080} />
+            */}
         </div>
     );
 };
