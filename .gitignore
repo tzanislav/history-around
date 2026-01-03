@@ -8,6 +8,7 @@ lerna-debug.log*
 # Front-End
 Front-End/history-around-web/node_modules/
 Front-End/history-around-web/dist/
+Front-End/history-around-web/public/Build/
 Front-End/history-around-web/.env
 Front-End/history-around-web/.env.local
 Front-End/history-around-web/.env.development.local
@@ -16,14 +17,12 @@ Front-End/history-around-web/.env.production.local
 
 # Back-End
 Back-End/node_modules/
-Back-End/public/Build/Web.data
-Back-End/public/Build/Web.wasm
+Back-End/public/Build/
 Back-End/.env
 Back-End/logs/
 
-# Build outputs (exclude Unity Build folder)
+# Build outputs
 **/build/
-!Back-End/public/Build/
 dist/
 *.tgz
 *.tar.gz
