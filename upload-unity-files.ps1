@@ -15,6 +15,40 @@ if (-not (Test-Path $KEY_FILE)) {
 }
 
 # ---------------------------------------------------------
+# Build Front-End and copy React build into Back-End/public
+# ---------------------------------------------------------
+$frontendPath = "Front-End/history-around-web"
+$backendPath = "Back-End"
+
+Write-Host "Installing front-end dependencies..." -ForegroundColor Cyan
+Push-Location $frontendPath
+npm install
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "ERROR: Front-end npm install failed with exit code $LASTEXITCODE"
+    Pop-Location
+    exit $LASTEXITCODE
+}
+
+Write-Host "Building front-end (npm run build)..." -ForegroundColor Cyan
+npm run build
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "ERROR: Front-end build failed with exit code $LASTEXITCODE"
+    Pop-Location
+    exit $LASTEXITCODE
+}
+Pop-Location
+
+Write-Host "Copying React build into Back-End/public..." -ForegroundColor Cyan
+Push-Location $backendPath
+npm run copy-build
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "ERROR: copy-build failed with exit code $LASTEXITCODE"
+    Pop-Location
+    exit $LASTEXITCODE
+}
+Pop-Location
+
+# ---------------------------------------------------------
 # Copy Build Files Locally
 # ---------------------------------------------------------
 Write-Host "Copying Unity Build files from Front-End to Back-End..." -ForegroundColor Cyan
