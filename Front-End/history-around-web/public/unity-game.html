@@ -80,9 +80,9 @@
         var buildUrl = "/Build";
         var loaderUrl = buildUrl + "/Web.loader.js";
         var config = {
-            dataUrl: buildUrl + "/Web.data",
-            frameworkUrl: buildUrl + "/Web.framework.js",
-            codeUrl: buildUrl + "/Web.wasm",
+            dataUrl: buildUrl + "/Web.data.br",
+            frameworkUrl: buildUrl + "/Web.framework.js.br",
+            codeUrl: buildUrl + "/Web.wasm.br",
             streamingAssetsUrl: "StreamingAssets",
             companyName: "History Around",
             productName: "History Around Game",
@@ -169,6 +169,70 @@
                 }).then((unityInstance) => {
                     loadingBar.style.display = "none";
                     window.unityInstance = unityInstance;
+                    
+                    // Add resize functionality
+                    window.resizeUnity = function(width, height) {
+                        if (unityInstance && canvas) {
+                            canvas.style.width = width + "px";
+                            canvas.style.height = height + "px";
+                            // Trigger Unity to recalculate its viewport
+                            unityInstance.SetFullscreen(0);
+                        }
+                    };
+                    
+                    // Add responsive resize function
+                    window.resizeUnityToContainer = function() {
+                        if (unityInstance && canvas) {
+                            const container = document.getElementById('unity-container');
+                            const containerRect = container.getBoundingClientRect();
+                            const aspectRatio = 960 / 600; // Original Unity aspect ratio
+                            
+                            let newWidth = containerRect.width;
+                            let newHeight = containerRect.height;
+                            
+                            // Maintain aspect ratio
+                            if (newWidth / newHeight > aspectRatio) {
+                                newWidth = newHeight * aspectRatio;
+                            } else {
+                                newHeight = newWidth / aspectRatio;
+                            }
+                            
+                            canvas.style.width = newWidth + "px";
+                            canvas.style.height = newHeight + "px";
+                            
+                            // Notify Unity of the resize
+                            unityInstance.SetFullscreen(0);
+                        }
+                    };
+                    
+                    // Add fullscreen toggle
+                    window.toggleUnityFullscreen = function() {
+                        if (unityInstance) {
+                            unityInstance.SetFullscreen(1);
+                        }
+                    };
+                    
+                    // Listen for resize commands from parent window
+                    window.addEventListener('message', function(event) {
+                        if (event.data.type === 'RESIZE_UNITY') {
+                            if (event.data.width && event.data.height) {
+                                window.resizeUnity(event.data.width, event.data.height);
+                            } else {
+                                window.resizeUnityToContainer();
+                            }
+                        } else if (event.data.type === 'TOGGLE_FULLSCREEN') {
+                            window.toggleUnityFullscreen();
+                        }
+                    });
+                    
+                    // Auto-resize on window resize
+                    window.addEventListener('resize', function() {
+                        setTimeout(window.resizeUnityToContainer, 100);
+                    });
+                    
+                    // Initial responsive resize
+                    setTimeout(window.resizeUnityToContainer, 500);
+                    
                     // Notify parent that Unity has finished loading
                     if (window.parent !== window) {
                         window.parent.postMessage({ type: 'UNITY_LOADING_COMPLETE' }, '*');

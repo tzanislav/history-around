@@ -7,6 +7,11 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Build output (copied from React build)
+public/Build/*.data
+public/Build/*.wasm
+public/Build/*.data.br
+public/Build/*.wasm.br
+public/Build/*.framework.js.br
 
 # Environment variables
 .env

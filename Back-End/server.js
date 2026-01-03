@@ -16,6 +16,27 @@ const fs = require('fs');
 
 // Serve static files from the React app build (if it exists)
 if (fs.existsSync(publicPath)) {
+    // Set proper headers for Unity files (including Brotli support)
+    app.use('/Build', (req, res, next) => {
+        if (req.path.endsWith('.br')) {
+            res.set('Content-Encoding', 'br');
+            if (req.path.endsWith('.wasm.br')) {
+                res.set('Content-Type', 'application/wasm');
+            } else if (req.path.endsWith('.data.br')) {
+                res.set('Content-Type', 'application/octet-stream');
+            } else if (req.path.endsWith('.js.br')) {
+                res.set('Content-Type', 'application/javascript');
+            }
+        } else if (req.path.endsWith('.wasm')) {
+            res.set('Content-Type', 'application/wasm');
+        } else if (req.path.endsWith('.data')) {
+            res.set('Content-Type', 'application/octet-stream');
+        } else if (req.path.endsWith('.js')) {
+            res.set('Content-Type', 'application/javascript');
+        }
+        next();
+    });
+    
     app.use(express.static(publicPath));
     console.log('✅ Serving React app from public/ directory');
 } else {
