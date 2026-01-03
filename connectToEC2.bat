@@ -1,0 +1,1 @@
+ssh -i "adimari-key-pair.pem" ubuntu@ec2-54-76-118-84.eu-west-1.compute.amazonaws.com

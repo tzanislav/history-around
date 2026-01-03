@@ -1,73 +1,63 @@
-# React + TypeScript + Vite
+# History Around - Web Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the React frontend for the History Around application. It is built with Vite, React, and TypeScript.
 
-Currently, two official plugins are available:
+## 🏗️ Project Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+├── Components/        # Reusable UI components
+│   ├── UnityPlayer.tsx    # Unity WebGL integration component
+│   ├── Welcome Splash.tsx # Loading screen and start button
+│   ├── Header.tsx         # Navigation header
+│   └── Footer.tsx         # Site footer
+├── Pages/             # Route pages
+│   ├── Home.tsx           # Main game page
+│   ├── About.tsx          # About information
+│   └── Contacts.tsx       # Contact information
+├── hooks/             # Custom React hooks
+│   └── useUnityLoader.ts  # Hook for Unity loading state management
+├── CSS/               # Stylesheets
+└── main.tsx           # Application entry point
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🎮 Unity Integration
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+The application integrates a Unity WebGL game using an `iframe` approach:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1.  **UnityPlayer Component**: Embeds `unity-game.html` in an iframe.
+2.  **Communication**: Uses `postMessage` API to communicate between React and Unity.
+    *   **Loading Progress**: Unity sends progress updates to React.
+    *   **Resizing**: React sends resize commands to Unity.
+3.  **Loader**: `useUnityLoader` hook listens for messages and manages the loading state (progress bar, error handling).
+
+### Resizing Controls
+The `UnityPlayer` component supports:
+-   **Auto-resize**: Automatically fits the container.
+-   **Presets**: Mobile, Tablet, Desktop, Widescreen.
+-   **Fullscreen**: Toggles fullscreen mode.
+
+## 🚀 Development
+
+### Install Dependencies
+```bash
+npm install
 ```
+
+### Run Dev Server
+```bash
+npm run dev
+```
+*Note: The Unity game might not load correctly in dev mode if the backend server is not running or if `.br` files are not served with correct headers.*
+
+### Build for Production
+```bash
+npm run build
+```
+This generates the `dist/` folder, which is then copied to the backend `public/` folder for deployment.
+
+## 📦 Deployment
+
+The deployment process is handled by the backend scripts:
+1.  `npm run build` (Frontend)
+2.  `npm run copy-build` (Backend script copies `dist/` to `Back-End/public/`)

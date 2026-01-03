@@ -63,6 +63,7 @@ Back-End/
 
 The server automatically serves:
 - Unity WebGL build files from `/Build/`
+- **Brotli Compression**: Supports `.br` files (`.wasm.br`, `.data.br`, `.js.br`) with correct `Content-Encoding` headers.
 - Unity game loader at `/unity-game.html`
 - React app with Unity iframe integration
 
@@ -80,12 +81,22 @@ All API routes should start with `/api/` to avoid conflicts with React routing.
 
 ## 🌐 EC2 Server Deployment
 
-### Quick Deploy (Recommended)
+### 1. Deploy Code
 ```bash
 # From project root directory
 chmod +x deploy.sh
 ./deploy.sh
 ```
+
+### 2. Upload Unity Files
+Large Unity files are excluded from git. Use the provided PowerShell script to upload them:
+
+```powershell
+# From project root (Windows)
+.\upload-unity-files.ps1
+```
+
+This script uploads `Web.data.br`, `Web.wasm.br`, and `Web.framework.js.br` to the server.
 
 ### Manual Deployment Steps
 ```bash
@@ -94,7 +105,7 @@ cd Back-End
 npm run deploy
 
 # 2. Upload Unity files (if missing)
-# Copy Web.data and Web.wasm to Back-End/public/Build/
+# See UNITY_FILES.md for details
 
 # 3. Start server
 npm start
