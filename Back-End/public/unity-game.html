@@ -5,16 +5,21 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <title>History Around Unity Game</title>
     <style>
-        body {
+        html, body {
             margin: 0;
             padding: 0;
+            width: 100%;
+            height: 100%;
             background: #231F20;
+        }
+        body {
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            overflow: hidden;
         }
         #unity-container {
+            position: relative;
             width: 100%;
             height: 100vh;
             display: flex;
@@ -24,8 +29,6 @@
         canvas {
             background: #231F20;
             display: block;
-            max-width: 100%;
-            max-height: 100%;
         }
         #unity-loading-bar {
             position: absolute;
@@ -100,9 +103,6 @@
         if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
             container.className = "unity-mobile";
             config.devicePixelRatio = 1;
-        } else {
-            canvas.style.width = "960px";
-            canvas.style.height = "600px";
         }
 
         loadingBar.style.display = "block";
@@ -180,26 +180,28 @@
                         }
                     };
                     
-                    // Add responsive resize function
+                    // Add responsive resize function with orientation-based ratio and max dimension 1200px
                     window.resizeUnityToContainer = function() {
                         if (unityInstance && canvas) {
                             const container = document.getElementById('unity-container');
-                            const containerRect = container.getBoundingClientRect();
-                            const aspectRatio = 960 / 600; // Original Unity aspect ratio
-                            
-                            let newWidth = containerRect.width;
-                            let newHeight = containerRect.height;
-                            
-                            // Maintain aspect ratio
-                            if (newWidth / newHeight > aspectRatio) {
-                                newWidth = newHeight * aspectRatio;
-                            } else {
-                                newHeight = newWidth / aspectRatio;
+                            const rect = container.getBoundingClientRect();
+                            const isLandscape = rect.width >= rect.height;
+                            const targetRatio = isLandscape ? (4 / 3) : (9 / 12); // width / height
+
+                            const maxWidth = Math.min(rect.width, window.innerWidth, 1200);
+                            const maxHeight = Math.min(rect.height, window.innerHeight, 1200);
+
+                            let newWidth = maxWidth;
+                            let newHeight = newWidth / targetRatio;
+
+                            if (newHeight > maxHeight) {
+                                newHeight = maxHeight;
+                                newWidth = newHeight * targetRatio;
                             }
-                            
-                            canvas.style.width = newWidth + "px";
-                            canvas.style.height = newHeight + "px";
-                            
+
+                            canvas.style.width = `${newWidth}px`;
+                            canvas.style.height = `${newHeight}px`;
+
                             // Notify Unity of the resize
                             unityInstance.SetFullscreen(0);
                         }
