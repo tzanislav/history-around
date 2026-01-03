@@ -30,6 +30,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "Building front-end (npm run build)..." -ForegroundColor Cyan
+$env:VITE_BUILD_TIME = (Get-Date -Format "yyyy-MM-dd HH:mm:ss K")
 npm run build
 if ($LASTEXITCODE -ne 0) {
     Write-Error "ERROR: Front-end build failed with exit code $LASTEXITCODE"
