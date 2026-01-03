@@ -1,6 +1,6 @@
 .unity-container {
     position: relative;
-    width: 100%;
+    width: 100vw;
     height: 80vh;
     margin: 0;
     display: flex;
