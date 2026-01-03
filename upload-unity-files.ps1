@@ -1,6 +1,9 @@
+$SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
+Set-Location $SCRIPT_DIR
+
 $EC2_HOST = "ec2-54-76-118-84.eu-west-1.compute.amazonaws.com"
 $EC2_USER = "ubuntu"
-$KEY_FILE = "adimari-key-pair.pem"
+$KEY_FILE = Join-Path $SCRIPT_DIR "adimari-key-pair.pem"
 $REMOTE_PATH = "/home/ubuntu/history-around/Back-End/public/Build/"
 $LOCAL_PATH = "Back-End\public\Build\*"
 $FRONTEND_SOURCE = "Front-End\history-around-web\public\Build\*"
@@ -100,8 +103,10 @@ Get-ChildItem -Path $BACKEND_DEST -File | ForEach-Object {
 }
 
 # Fetch remote hashes
-$remoteHashCommand = "cd /home/ubuntu/history-around/Back-End/public/Build && for f in *; do [ -f `"$f`" ] && sha256sum `"$f`"; done"
-$remoteHashOutput = & ssh -i $KEY_FILE -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "$remoteHashCommand"
+$remoteHashCommand = @'
+cd /home/ubuntu/history-around/Back-End/public/Build && for f in *; do if [ -f "$f" ]; then sha256sum "$f"; fi; done
+'@
+$remoteHashOutput = & ssh -i "$KEY_FILE" -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "$remoteHashCommand"
 $remoteHashes = @{}
 if ($LASTEXITCODE -eq 0 -and $remoteHashOutput) {
     $remoteHashOutput -split "`n" | ForEach-Object {
