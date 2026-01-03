@@ -90,13 +90,50 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "SUCCESS: Remote repo updated." -ForegroundColor Green
 }
 
-Write-Host "Starting upload of Unity Build files AND server.js to EC2..." -ForegroundColor Cyan
+Write-Host "Checking remote Build hashes to avoid redundant uploads..." -ForegroundColor Cyan
 
-# Construct SCP command for Build files
-# -i: Identity file
-# -r: Recursive (though we are using wildcard)
-# -o StrictHostKeyChecking=no: Avoid prompt for host key
-$scpCommand = "scp -i `"$KEY_FILE`" -r $LOCAL_PATH ${EC2_USER}@${EC2_HOST}:${REMOTE_PATH}"
+# Compute local hashes
+$localHashes = @{}
+Get-ChildItem -Path $BACKEND_DEST -File | ForEach-Object {
+    $hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash
+    $localHashes[$_.Name] = $hash
+}
+
+# Fetch remote hashes
+$remoteHashCommand = "cd /home/ubuntu/history-around/Back-End/public/Build && for f in *; do [ -f `"$f`" ] && sha256sum `"$f`"; done"
+$remoteHashOutput = & ssh -i $KEY_FILE -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "$remoteHashCommand"
+$remoteHashes = @{}
+if ($LASTEXITCODE -eq 0 -and $remoteHashOutput) {
+    $remoteHashOutput -split "`n" | ForEach-Object {
+        $parts = $_ -split "\s+",2
+        if ($parts.Length -eq 2) {
+            $hash = $parts[0].Trim()
+            $name = $parts[1].Trim()
+            if ($name) { $remoteHashes[$name] = $hash }
+        }
+    }
+} else {
+    Write-Warning "Could not retrieve remote hashes (exit $LASTEXITCODE). Will upload all build files."
+}
+
+# Determine which files need upload
+$filesToUpload = $localHashes.Keys | Where-Object { -not $remoteHashes.ContainsKey($_) -or $remoteHashes[$_] -ne $localHashes[$_] }
+
+if ($filesToUpload.Count -eq 0) {
+    Write-Host "No build file changes detected. Skipping Build upload." -ForegroundColor Green
+} else {
+    Write-Host "Uploading changed build files..." -ForegroundColor Cyan
+    foreach ($file in $filesToUpload) {
+        $localFilePath = Join-Path $BACKEND_DEST $file
+        $scpFileCommand = "scp -i `"$KEY_FILE`" `"$localFilePath`" ${EC2_USER}@${EC2_HOST}:${REMOTE_PATH}"
+        Write-Host " - $file"
+        Invoke-Expression $scpFileCommand
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "ERROR: Upload failed for $file with exit code $LASTEXITCODE"
+            exit $LASTEXITCODE
+        }
+    }
+}
 
 # Construct SCP command for server.js
 $SERVER_JS_LOCAL = "Back-End\server.js"
@@ -106,18 +143,6 @@ $scpServerCommand = "scp -i `"$KEY_FILE`" $SERVER_JS_LOCAL ${EC2_USER}@${EC2_HOS
 # Construct SCP command for unity-game.html
 $UNITY_HTML_REMOTE = "/home/ubuntu/history-around/Back-End/public/"
 $scpHtmlCommand = "scp -i `"$KEY_FILE`" $UNITY_HTML_DEST ${EC2_USER}@${EC2_HOST}:${UNITY_HTML_REMOTE}"
-
-Write-Host "Uploading from: $LOCAL_PATH"
-Write-Host "Uploading to:   $REMOTE_PATH"
-Write-Host "This might take a while depending on your upload speed..."
-
-# Execute SCP for Build files
-Invoke-Expression $scpCommand
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "ERROR: Build upload failed with exit code $LASTEXITCODE"
-    exit $LASTEXITCODE
-}
 
 Write-Host "Uploading server.js..."
 Invoke-Expression $scpServerCommand
