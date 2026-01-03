@@ -79,3 +79,6 @@ Thumbs.db
 # Temporary folders
 tmp/
 temp/
+
+# Security keys
+*.pem
