@@ -82,9 +82,25 @@ if ($LASTEXITCODE -ne 0) {
 # Git Sync (Remote)
 # ---------------------------------------------------------
 Write-Host "Syncing with GitHub (Remote)..." -ForegroundColor Cyan
-$gitPullCommand = "cd /home/ubuntu/history-around && git pull"
-$sshGitCommand = "ssh -i `"$KEY_FILE`" -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} `"$gitPullCommand`""
-Invoke-Expression $sshGitCommand
+$remoteRepoPath = "/home/ubuntu/history-around"
+$remoteStatusCommand = "cd $remoteRepoPath && git status --porcelain"
+$remoteResetCommand = "cd $remoteRepoPath && git fetch origin main && git reset --hard origin/main && git clean -fd"
+$remotePullCommand = "cd $remoteRepoPath && git pull"
+
+# Check for uncommitted remote changes and discard them (per deployment policy)
+$remoteStatusOutput = & ssh -i "$KEY_FILE" -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "$remoteStatusCommand"
+if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($remoteStatusOutput)) {
+    Write-Warning "Remote repo has uncommitted changes. Discarding remote changes before pulling..."
+    & ssh -i "$KEY_FILE" -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "$remoteResetCommand"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "Failed to reset remote repo; continuing with manual upload."
+    }
+} elseif ($LASTEXITCODE -ne 0) {
+    Write-Warning "Could not check remote git status; continuing with manual upload."
+}
+
+# Attempt remote pull after ensuring clean state
+& ssh -i "$KEY_FILE" -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "$remotePullCommand"
 
 if ($LASTEXITCODE -ne 0) {
     Write-Warning "Remote git pull failed. Continuing with manual upload..."
