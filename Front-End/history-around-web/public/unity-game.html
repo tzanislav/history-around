@@ -169,10 +169,20 @@
                 }).then((unityInstance) => {
                     loadingBar.style.display = "none";
                     window.unityInstance = unityInstance;
+
+                    const isUnityFullscreen = () => {
+                        return document.fullscreenElement === canvas
+                            || document.fullscreenElement === container
+                            || document.webkitFullscreenElement === canvas
+                            || document.webkitFullscreenElement === container;
+                    };
                     
                     // Add resize functionality
                     window.resizeUnity = function(width, height) {
                         if (unityInstance && canvas) {
+                            if (isUnityFullscreen()) {
+                                return; // Avoid exiting fullscreen on manual resize
+                            }
                             canvas.style.width = width + "px";
                             canvas.style.height = height + "px";
                             // Trigger Unity to recalculate its viewport
@@ -183,6 +193,9 @@
                     // Add responsive resize function with orientation-based ratio and max dimension 1200px
                     window.resizeUnityToContainer = function() {
                         if (unityInstance && canvas) {
+                            if (isUnityFullscreen()) {
+                                return; // Skip auto-resize while fullscreen is active
+                            }
                             const container = document.getElementById('unity-container');
                             const rect = container.getBoundingClientRect();
                             const isLandscape = rect.width >= rect.height;
