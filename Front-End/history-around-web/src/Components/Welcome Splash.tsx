@@ -39,7 +39,7 @@ const WelcomeSplash: React.FC<WelcomeSplashProps> = ({ unityLoader }) => {
     return (
         <div className="overlay">
             <div className="welcome-splash">
-                <h1>Welcome to History Around</h1>
+                <h1>Welcome to Real Vision of History</h1>
                 <p>Explore historical events and timelines.</p>
                 {unityLoader.isLoading && (
                     <div className="loading-progress">

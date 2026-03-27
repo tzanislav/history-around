@@ -153,7 +153,7 @@ const UnityPlayer: React.FC<UnityPlayerProps> = ({
             <iframe
                 ref={iframeRef}
                 src="/unity-game.html"
-                title="History Around Unity Game"
+                title="Real Vision of History Unity Game"
                 className='unity-frame'
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen

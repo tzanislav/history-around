@@ -9,7 +9,7 @@ const Footer: React.FC = () => {
             <div className="footer-container">
                 <div className="footer-content">
                     <div className="footer-section">
-                        <h3 className="footer-title">History Around</h3>
+                        <h3 className="footer-title">Real Vision of History</h3>
                         <p className="footer-description">
                             Discovering the stories that shaped our world, one location at a time.
                         </p>
@@ -33,7 +33,7 @@ const Footer: React.FC = () => {
                 </div>
                 
                 <div className="footer-bottom">
-                    <p>&copy; 2025 History Around. All rights reserved.</p>
+                    <p>&copy; 2025 Real Vision of History. All rights reserved.</p>
                     <p className="build-meta">Build: {buildTimestamp}</p>
                 </div>
             </div>
