@@ -7,8 +7,8 @@ const Contacts: React.FC = () => {
             <h1 className="contacts-title">Contact Us</h1>
             <div className="contacts-content">
                 <div className="contact-info">
-                    <h3>Get in Touch</h3>
-                    <p>We'd love to hear from you! Reach out to us for any questions, suggestions, or feedback.</p>
+                    <h3>Свържете се с нас</h3>
+                    <p>Ще се радваме да чуем от вас! Свържете се с нас за всякакви въпроси, предложения или обратна връзка.</p>
                 </div>
                 
                 <div className="contact-methods">
@@ -18,23 +18,23 @@ const Contacts: React.FC = () => {
                     </div>
                     
                     <div className="contact-item">
-                        <h4>Phone</h4>
-                        <p>+1 (555) 123-4567</p>
+                        <h4>Телефон</h4>
+                        <p>+359 (887) 618-814</p>
                     </div>
                     
                     <div className="contact-item">
-                        <h4>Address</h4>
-                        <p>123 History Lane<br />Heritage City, HC 12345</p>
+                        <h4>Адрес</h4>
+                        <p>Стара Загора<br />ул. Иван Вазов 17</p>
                     </div>
                 </div>
                 
                 <div className="contact-form">
-                    <h3>Send us a Message</h3>
+                    <h3>Изпратете ни съобщение</h3>
                     <form>
-                        <input type="text" placeholder="Your Name" className="form-input" />
-                        <input type="email" placeholder="Your Email" className="form-input" />
-                        <textarea placeholder="Your Message" className="form-textarea" rows={5}></textarea>
-                        <button type="submit" className="form-button">Send Message</button>
+                        <input type="text" placeholder="Вашето име" className="form-input" />
+                        <input type="email" placeholder="Вашият имейл" className="form-input" />
+                        <textarea placeholder="Вашето съобщение" className="form-textarea" rows={5}></textarea>
+                        <button type="submit" className="form-button">Изпратете съобщение</button>
                     </form>
                 </div>
             </div>
