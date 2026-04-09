@@ -37,11 +37,21 @@
     margin: 10px 0;
 }
 
-button.disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+.status-text {
+    margin-top: 20px;
+    font-size: 1rem;
+    opacity: 0.8;
 }
 
-button.disabled:hover {
-    background: rgb(34, 34, 34) !important;
+.overlay.fade-out {
+    animation: fadeOut 1s ease forwards;
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
 }

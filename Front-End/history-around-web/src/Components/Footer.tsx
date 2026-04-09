@@ -1,7 +1,6 @@
 import React from 'react';
 import '../CSS/Footer.css';
 
-const buildTimestamp = import.meta.env.VITE_BUILD_TIME || 'dev build';
 
 const Footer: React.FC = () => {
     return (
@@ -33,8 +32,8 @@ const Footer: React.FC = () => {
                 </div>
                 
                 <div className="footer-bottom">
-                    <p>&copy; 2025 Real Vision of History. All rights reserved.</p>
-                    <p className="build-meta">Build: {buildTimestamp}</p>
+                    <p>&copy; 2026 Real Vision of History. All rights reserved.</p>
+                    <p className="build-meta">Build: 03.2026</p>
                 </div>
             </div>
         </footer>
