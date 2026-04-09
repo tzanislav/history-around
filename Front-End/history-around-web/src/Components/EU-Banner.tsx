@@ -1,8 +1,7 @@
 const EUBanner = () => {
   return (
     <div className="eu-banner"> 
-
-        <p>This project has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 101004469.</p>
+        <img src="http://mesharch.studio:3923/Work/ZaSite.png" alt="EU Logo" className="eu-logo" />
     </div>
   );
 }
