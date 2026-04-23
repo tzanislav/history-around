@@ -24,7 +24,7 @@ const Contacts: React.FC = () => {
                     
                     <div className="contact-item">
                         <h4>Адрес</h4>
-                        <p>Стара Загора<br />ул. Иван Вазов 17</p>
+                        <p>Стара Загора<br />ул. Развитие 40</p>
                     </div>
                 </div>
                 
