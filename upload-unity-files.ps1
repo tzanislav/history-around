@@ -134,10 +134,17 @@ $remotePullCommand = "cd $RemoteRepoPath && git pull"
 & ssh -i "$KeyFile" -o StrictHostKeyChecking=no ${Ec2User}@${Ec2Host} "$remotePullCommand"
 $remotePullSucceeded = ($LASTEXITCODE -eq 0)
 
+if (-not $remotePullSucceeded) {
+    Write-Warning "Remote git pull failed. Forcing remote repo to match origin/main..."
+    $remoteForceSyncCommand = "cd $RemoteRepoPath && git fetch origin main && git reset --hard origin/main && git clean -fd"
+    & ssh -i "$KeyFile" -o StrictHostKeyChecking=no ${Ec2User}@${Ec2Host} "$remoteForceSyncCommand"
+    $remotePullSucceeded = ($LASTEXITCODE -eq 0)
+}
+
 if ($remotePullSucceeded) {
-    Write-Host "SUCCESS: Remote repo updated via git pull." -ForegroundColor Green
+    Write-Host "SUCCESS: Remote repo synced to latest main." -ForegroundColor Green
 } else {
-    Write-Warning "Remote git pull failed. Uploading Back-End/public and server.js directly..."
+    Write-Warning "Remote git sync failed. Uploading Back-End/public and server.js directly..."
 
     $scpPublicCommand = "scp -i `"$KeyFile`" -r `"$BackendPath\public`" ${Ec2User}@${Ec2Host}:${RemotePublicParent}"
     Invoke-Expression $scpPublicCommand
