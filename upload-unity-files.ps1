@@ -5,9 +5,9 @@ $EC2_HOST = "ec2-54-76-118-84.eu-west-1.compute.amazonaws.com"
 $EC2_USER = "ubuntu"
 $KEY_FILE = Join-Path $SCRIPT_DIR "adimari-key-pair.pem"
 $REMOTE_PATH = "/home/ubuntu/history-around/Back-End/public/Build/"
-$FRONTEND_SOURCE = "Front-End\history-around-web\public\Build\*"
+$FRONTEND_SOURCE = "newFront-end\public\Build\*"
 $BACKEND_DEST = "Back-End\public\Build"
-$UNITY_HTML_SOURCE = "Front-End\history-around-web\public\unity-game.html"
+$UNITY_HTML_SOURCE = "newFront-end\public\unity-game.html"
 $UNITY_HTML_DEST = "Back-End\public\unity-game.html"
 
 # Check if key file exists
@@ -19,7 +19,7 @@ if (-not (Test-Path $KEY_FILE)) {
 # ---------------------------------------------------------
 # Build Front-End and copy React build into Back-End/public
 # ---------------------------------------------------------
-$frontendPath = "Front-End/history-around-web"
+$frontendPath = "newFront-end"
 $backendPath = "Back-End"
 
 Write-Host "Installing front-end dependencies..." -ForegroundColor Cyan
@@ -54,15 +54,25 @@ Pop-Location
 # ---------------------------------------------------------
 # Copy Build Files Locally
 # ---------------------------------------------------------
-Write-Host "Copying Unity Build files from Front-End to Back-End..." -ForegroundColor Cyan
+Write-Host "Copying Unity Build files from newFront-end to Back-End (if present)..." -ForegroundColor Cyan
 
 if (-not (Test-Path $BACKEND_DEST)) {
     New-Item -ItemType Directory -Force -Path $BACKEND_DEST | Out-Null
 }
 
-Copy-Item -Path $FRONTEND_SOURCE -Destination $BACKEND_DEST -Recurse -Force
-Copy-Item -Path $UNITY_HTML_SOURCE -Destination $UNITY_HTML_DEST -Force
-Write-Host "SUCCESS: Files copied locally." -ForegroundColor Green
+if (Test-Path $FRONTEND_SOURCE) {
+    Copy-Item -Path $FRONTEND_SOURCE -Destination $BACKEND_DEST -Recurse -Force
+    Write-Host "SUCCESS: Unity Build files copied locally." -ForegroundColor Green
+} else {
+    Write-Warning "Unity Build files not found at '$FRONTEND_SOURCE'. Keeping existing Back-End/public/Build files."
+}
+
+if (Test-Path $UNITY_HTML_SOURCE) {
+    Copy-Item -Path $UNITY_HTML_SOURCE -Destination $UNITY_HTML_DEST -Force
+    Write-Host "SUCCESS: unity-game.html copied locally." -ForegroundColor Green
+} else {
+    Write-Warning "unity-game.html not found at '$UNITY_HTML_SOURCE'. Keeping existing Back-End/public/unity-game.html file."
+}
 
 # ---------------------------------------------------------
 # Git Sync (Local)

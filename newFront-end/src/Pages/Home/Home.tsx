@@ -32,7 +32,7 @@ function Home() {
 
       <section id="about">
         <SplitSection
-          heading="Walk Through Time, One Street at a Time"
+          heading="Based on photogrammetric 3D scans of real-world locations"
           paragraph="History Around reveals the stories hidden in landmarks, neighborhoods, and forgotten corners. From iconic monuments to overlooked streets, each location becomes a gateway into the past with context that is easy to explore and impossible to forget."
           imageSrc="images/drone_1.jpg"
           imageAlt="Ancient city architecture overlooking a river"

@@ -25,8 +25,9 @@ function copyDirectory(src, dest) {
 }
 
 // Copy React build to public folder
-const distPath = path.join(__dirname, '../Front-End/history-around-web/dist');
+const distPath = path.join(__dirname, '../newFront-end/dist');
 const publicPath = path.join(__dirname, 'public');
+const publicAssetsPath = path.join(publicPath, 'assets');
 
 console.log('📋 Copying React build files...');
 console.log(`From: ${distPath}`);
@@ -34,6 +35,11 @@ console.log(`To: ${publicPath}`);
 
 try {
     if (fs.existsSync(distPath)) {
+        // Remove previous generated chunks so deprecated front-end assets do not accumulate.
+        if (fs.existsSync(publicAssetsPath)) {
+            fs.rmSync(publicAssetsPath, { recursive: true, force: true });
+        }
+
         copyDirectory(distPath, publicPath);
         console.log('✅ React build copied successfully!');
     } else {
