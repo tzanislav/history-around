@@ -52,7 +52,16 @@ app.get('/api/health', (req, res) => {
 // Debug endpoint to check Unity files
 app.get('/api/unity-status', (req, res) => {
     const unityBuildPath = path.join(publicPath, 'Build');
-    const requiredFiles = ['Web.loader.js', 'Web.framework.js', 'Web.data', 'Web.wasm'];
+    const requiredFiles = [
+        'Web.loader.js',
+        'Web.framework.js',
+        'Web.data',
+        'Web.wasm',
+        'web.loader.js',
+        'web.framework.js',
+        'web.data',
+        'web.wasm'
+    ];
     const fileStatus = {};
     
     requiredFiles.forEach(file => {
@@ -68,7 +77,8 @@ app.get('/api/unity-status', (req, res) => {
         message: 'Unity build file status',
         buildPath: unityBuildPath,
         files: fileStatus,
-        allFilesExist: requiredFiles.every(file => fileStatus[file].exists)
+        hasUppercaseSet: ['Web.loader.js', 'Web.framework.js', 'Web.data', 'Web.wasm'].every(file => fileStatus[file].exists),
+        hasLowercaseSet: ['web.loader.js', 'web.framework.js', 'web.data', 'web.wasm'].every(file => fileStatus[file].exists)
     });
 });
 
@@ -84,6 +94,21 @@ app.get('/api/history', (req, res) => {
 app.use((req, res, next) => {
     // Skip API routes
     if (req.path.startsWith('/api/')) {
+        return next();
+    }
+
+    // Do not serve index.html for asset/file requests.
+    // This avoids returning HTML for missing JS/WASM paths (e.g., Unity loader files).
+    const hasFileExtension = path.extname(req.path) !== '';
+    if (hasFileExtension || req.path.startsWith('/Build/')) {
+        return res.status(404).json({
+            error: 'Asset not found',
+            path: req.path,
+        });
+    }
+
+    // Only serve SPA shell for navigation requests expecting HTML.
+    if (!req.accepts('html')) {
         return next();
     }
     
