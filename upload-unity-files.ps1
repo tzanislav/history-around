@@ -1,230 +1,165 @@
-$SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
-Set-Location $SCRIPT_DIR
+$ErrorActionPreference = 'Stop'
 
-$EC2_HOST = "ec2-54-76-118-84.eu-west-1.compute.amazonaws.com"
-$EC2_USER = "ubuntu"
-$KEY_FILE = Join-Path $SCRIPT_DIR "adimari-key-pair.pem"
-$REMOTE_PATH = "/home/ubuntu/history-around/Back-End/public/Build/"
-$FRONTEND_SOURCE = "newFront-end\public\Build\*"
-$BACKEND_DEST = "Back-End\public\Build"
-$UNITY_HTML_SOURCE = "newFront-end\public\unity-game.html"
-$UNITY_HTML_DEST = "Back-End\public\unity-game.html"
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+Set-Location $ScriptDir
 
-# Check if key file exists
-if (-not (Test-Path $KEY_FILE)) {
-    Write-Error "ERROR: Key file '$KEY_FILE' not found in current directory!"
-    exit 1
+$Ec2Host = "ec2-54-76-118-84.eu-west-1.compute.amazonaws.com"
+$Ec2User = "ubuntu"
+$KeyFile = Join-Path $ScriptDir "adimari-key-pair.pem"
+
+$FrontendPath = "newFront-end"
+$BackendPath = "Back-End"
+
+$UnityBuildSource = Join-Path $FrontendPath "public\Build"
+$UnityBuildDest = Join-Path $BackendPath "public\Build"
+$UnityHtmlSource = Join-Path $FrontendPath "public\unity-game.html"
+$UnityHtmlDest = Join-Path $BackendPath "public\unity-game.html"
+
+$RemoteRepoPath = "/home/ubuntu/history-around"
+$RemoteBackendPath = "/home/ubuntu/history-around/Back-End"
+$RemotePublicParent = "/home/ubuntu/history-around/Back-End/"
+
+function Invoke-Step {
+    param(
+        [string]$Message,
+        [scriptblock]$Action
+    )
+
+    Write-Host $Message -ForegroundColor Cyan
+    & $Action
+    if ($LASTEXITCODE -ne 0) {
+        throw "Step failed: $Message (exit code $LASTEXITCODE)"
+    }
 }
 
-# ---------------------------------------------------------
-# Build Front-End and copy React build into Back-End/public
-# ---------------------------------------------------------
-$frontendPath = "newFront-end"
-$backendPath = "Back-End"
+function Update-UnityBuildNames {
+    param([string]$BuildDirectory)
 
-Write-Host "Installing front-end dependencies..." -ForegroundColor Cyan
-Push-Location $frontendPath
-npm install
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "ERROR: Front-end npm install failed with exit code $LASTEXITCODE"
+    if (-not (Test-Path $BuildDirectory)) {
+        Write-Warning "Unity build directory not found: $BuildDirectory"
+        return
+    }
+
+    $canonicalMap = @{
+        "web.loader.js"    = "Web.loader.js"
+        "web.framework.js" = "Web.framework.js"
+        "web.data"         = "Web.data"
+        "web.wasm"         = "Web.wasm"
+    }
+
+    foreach ($sourceName in $canonicalMap.Keys) {
+        $canonicalName = $canonicalMap[$sourceName]
+        $sourcePath = Join-Path $BuildDirectory $sourceName
+
+        if (Test-Path $sourcePath) {
+            $item = Get-Item $sourcePath
+
+            # Already normalized with the desired case.
+            if ($item.Name -ceq $canonicalName) {
+                continue
+            }
+
+            # On Windows, case-only "copy" hits self-copy errors. Use a two-step rename.
+            $tempName = "$canonicalName.casefix"
+            $tempPath = Join-Path $BuildDirectory $tempName
+
+            if (Test-Path $tempPath) {
+                Remove-Item -Path $tempPath -Force
+            }
+
+            Rename-Item -Path $sourcePath -NewName $tempName -Force
+            Rename-Item -Path $tempPath -NewName $canonicalName -Force
+        }
+    }
+}
+
+if (-not (Test-Path $KeyFile)) {
+    throw "Key file '$KeyFile' not found in project root."
+}
+
+Invoke-Step "Installing front-end dependencies..." {
+    Push-Location $FrontendPath
+    npm install
     Pop-Location
-    exit $LASTEXITCODE
 }
 
-Write-Host "Building front-end (npm run build)..." -ForegroundColor Cyan
-$env:VITE_BUILD_TIME = (Get-Date -Format "yyyy-MM-dd HH:mm:ss K")
-npm run build
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "ERROR: Front-end build failed with exit code $LASTEXITCODE"
+Invoke-Step "Building front-end (npm run build)..." {
+    Push-Location $FrontendPath
+    $env:VITE_BUILD_TIME = (Get-Date -Format "yyyy-MM-dd HH:mm:ss K")
+    npm run build
     Pop-Location
-    exit $LASTEXITCODE
 }
-Pop-Location
 
-Write-Host "Copying React build into Back-End/public..." -ForegroundColor Cyan
-Push-Location $backendPath
-npm run copy-build
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "ERROR: copy-build failed with exit code $LASTEXITCODE"
+Invoke-Step "Copying React build into Back-End/public..." {
+    Push-Location $BackendPath
+    npm run copy-build
     Pop-Location
-    exit $LASTEXITCODE
-}
-Pop-Location
-
-# ---------------------------------------------------------
-# Copy Build Files Locally
-# ---------------------------------------------------------
-Write-Host "Copying Unity Build files from newFront-end to Back-End (if present)..." -ForegroundColor Cyan
-
-if (-not (Test-Path $BACKEND_DEST)) {
-    New-Item -ItemType Directory -Force -Path $BACKEND_DEST | Out-Null
 }
 
-if (Test-Path $FRONTEND_SOURCE) {
-    Copy-Item -Path $FRONTEND_SOURCE -Destination $BACKEND_DEST -Recurse -Force
-    Write-Host "SUCCESS: Unity Build files copied locally." -ForegroundColor Green
+Write-Host "Copying Unity files from newFront-end to Back-End..." -ForegroundColor Cyan
+if (-not (Test-Path $UnityBuildDest)) {
+    New-Item -ItemType Directory -Force -Path $UnityBuildDest | Out-Null
+}
+
+if (Test-Path (Join-Path $UnityBuildSource "*")) {
+    Copy-Item -Path (Join-Path $UnityBuildSource "*") -Destination $UnityBuildDest -Recurse -Force
+    Update-UnityBuildNames -BuildDirectory $UnityBuildDest
+    Write-Host "SUCCESS: Unity Build files copied and normalized (Web.* naming)." -ForegroundColor Green
 } else {
-    Write-Warning "Unity Build files not found at '$FRONTEND_SOURCE'. Keeping existing Back-End/public/Build files."
+    Write-Warning "Unity Build files not found at '$UnityBuildSource'. Keeping existing Back-End/public/Build files."
 }
 
-if (Test-Path $UNITY_HTML_SOURCE) {
-    Copy-Item -Path $UNITY_HTML_SOURCE -Destination $UNITY_HTML_DEST -Force
-    Write-Host "SUCCESS: unity-game.html copied locally." -ForegroundColor Green
+if (Test-Path $UnityHtmlSource) {
+    Copy-Item -Path $UnityHtmlSource -Destination $UnityHtmlDest -Force
+    Write-Host "SUCCESS: unity-game.html copied." -ForegroundColor Green
 } else {
-    Write-Warning "unity-game.html not found at '$UNITY_HTML_SOURCE'. Keeping existing Back-End/public/unity-game.html file."
+    Write-Warning "unity-game.html not found at '$UnityHtmlSource'. Keeping existing Back-End/public/unity-game.html file."
 }
 
-# ---------------------------------------------------------
-# Git Sync (Local)
-# ---------------------------------------------------------
 Write-Host "Syncing with GitHub (Local)..." -ForegroundColor Cyan
 git add .
 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 git commit -m "Auto-deploy: $timestamp"
+if ($LASTEXITCODE -ne 0) {
+    Write-Warning "No commit created (likely no changes). Continuing..."
+}
+
 git push
 if ($LASTEXITCODE -ne 0) {
-    Write-Warning "Git push failed or nothing to push. Continuing..."
-} else {
-    Write-Host "SUCCESS: Pushed to GitHub." -ForegroundColor Green
+    Write-Warning "Local git push failed. Deployment will continue with manual upload fallback if needed."
 }
 
-# ---------------------------------------------------------
-# Git Sync (Remote)
-# ---------------------------------------------------------
 Write-Host "Syncing with GitHub (Remote)..." -ForegroundColor Cyan
-$remoteRepoPath = "/home/ubuntu/history-around"
-$remoteStatusCommand = "cd $remoteRepoPath && git status --porcelain"
-$remoteResetCommand = "cd $remoteRepoPath && git fetch origin main && git reset --hard origin/main && git clean -fd"
-$remotePullCommand = "cd $remoteRepoPath && git pull"
-
-# Check for uncommitted remote changes and discard them (per deployment policy)
-$remoteStatusOutput = & ssh -i "$KEY_FILE" -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "$remoteStatusCommand"
-if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($remoteStatusOutput)) {
-    Write-Warning "Remote repo has uncommitted changes. Discarding remote changes before pulling..."
-    & ssh -i "$KEY_FILE" -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "$remoteResetCommand"
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning "Failed to reset remote repo; continuing with manual upload."
-    }
-} elseif ($LASTEXITCODE -ne 0) {
-    Write-Warning "Could not check remote git status; continuing with manual upload."
-}
-
-# Attempt remote pull after ensuring clean state
-& ssh -i "$KEY_FILE" -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "$remotePullCommand"
+$remotePullCommand = "cd $RemoteRepoPath && git pull"
+& ssh -i "$KeyFile" -o StrictHostKeyChecking=no ${Ec2User}@${Ec2Host} "$remotePullCommand"
 $remotePullSucceeded = ($LASTEXITCODE -eq 0)
 
-if (-not $remotePullSucceeded) {
-    Write-Warning "Remote git pull failed. Continuing with manual upload..."
+if ($remotePullSucceeded) {
+    Write-Host "SUCCESS: Remote repo updated via git pull." -ForegroundColor Green
 } else {
-    Write-Host "SUCCESS: Remote repo updated." -ForegroundColor Green
-}
+    Write-Warning "Remote git pull failed. Uploading Back-End/public and server.js directly..."
 
-Write-Host "Checking remote Build hashes to avoid redundant uploads..." -ForegroundColor Cyan
-
-# Compute local hashes
-$localHashes = @{}
-Get-ChildItem -Path $BACKEND_DEST -File | ForEach-Object {
-    $hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash
-    $localHashes[$_.Name] = $hash
-}
-
-# Fetch remote hashes
-$remoteHashCommand = @'
-cd /home/ubuntu/history-around/Back-End/public/Build && for f in *; do if [ -f "$f" ]; then sha256sum "$f"; fi; done
-'@
-$remoteHashOutput = & ssh -i "$KEY_FILE" -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "$remoteHashCommand"
-$remoteHashes = @{}
-if ($LASTEXITCODE -eq 0 -and $remoteHashOutput) {
-    $remoteHashOutput -split "`n" | ForEach-Object {
-        $parts = $_ -split "\s+",2
-        if ($parts.Length -eq 2) {
-            $hash = $parts[0].Trim()
-            $name = $parts[1].Trim()
-            if ($name) { $remoteHashes[$name] = $hash }
-        }
-    }
-} else {
-    Write-Warning "Could not retrieve remote hashes (exit $LASTEXITCODE). Will upload all build files."
-}
-
-# Determine which files need upload
-$filesToUpload = $localHashes.Keys | Where-Object { -not $remoteHashes.ContainsKey($_) -or $remoteHashes[$_] -ne $localHashes[$_] }
-
-if ($filesToUpload.Count -eq 0) {
-    Write-Host "No build file changes detected. Skipping Build upload." -ForegroundColor Green
-} else {
-    Write-Host "Uploading changed build files..." -ForegroundColor Cyan
-    foreach ($file in $filesToUpload) {
-        $localFilePath = Join-Path $BACKEND_DEST $file
-        $scpFileCommand = "scp -i `"$KEY_FILE`" `"$localFilePath`" ${EC2_USER}@${EC2_HOST}:${REMOTE_PATH}"
-        Write-Host " - $file"
-        Invoke-Expression $scpFileCommand
-        if ($LASTEXITCODE -ne 0) {
-            Write-Error "ERROR: Upload failed for $file with exit code $LASTEXITCODE"
-            exit $LASTEXITCODE
-        }
-    }
-}
-
-# Construct SCP command for server.js
-$SERVER_JS_LOCAL = "Back-End\server.js"
-$SERVER_JS_REMOTE = "/home/ubuntu/history-around/Back-End/"
-$scpServerCommand = "scp -i `"$KEY_FILE`" $SERVER_JS_LOCAL ${EC2_USER}@${EC2_HOST}:${SERVER_JS_REMOTE}"
-
-# Construct SCP command for unity-game.html
-$UNITY_HTML_REMOTE = "/home/ubuntu/history-around/Back-End/public/"
-$scpHtmlCommand = "scp -i `"$KEY_FILE`" $UNITY_HTML_DEST ${EC2_USER}@${EC2_HOST}:${UNITY_HTML_REMOTE}"
-
-Write-Host "Uploading server.js..."
-Invoke-Expression $scpServerCommand
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "ERROR: server.js upload failed with exit code $LASTEXITCODE"
-    exit $LASTEXITCODE
-}
-
-Write-Host "Uploading unity-game.html..."
-Invoke-Expression $scpHtmlCommand
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "ERROR: unity-game.html upload failed with exit code $LASTEXITCODE"
-    exit $LASTEXITCODE
-}
-
-# If remote git pull failed, ensure all web assets are synced, not only Unity files.
-if (-not $remotePullSucceeded) {
-    Write-Host "Remote pull failed earlier. Uploading full Back-End/public folder to ensure complete deployment..." -ForegroundColor Yellow
-    $PUBLIC_DIR_LOCAL = "Back-End\public"
-    $PUBLIC_DIR_REMOTE_PARENT = "/home/ubuntu/history-around/Back-End/"
-    $scpPublicCommand = "scp -i `"$KEY_FILE`" -r $PUBLIC_DIR_LOCAL ${EC2_USER}@${EC2_HOST}:${PUBLIC_DIR_REMOTE_PARENT}"
+    $scpPublicCommand = "scp -i `"$KeyFile`" -r `"$BackendPath\public`" ${Ec2User}@${Ec2Host}:${RemotePublicParent}"
     Invoke-Expression $scpPublicCommand
-
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "ERROR: Full public folder upload failed with exit code $LASTEXITCODE"
-        exit $LASTEXITCODE
+        throw "Failed to upload Back-End/public (exit code $LASTEXITCODE)"
     }
 
-    Write-Host "SUCCESS: Full Back-End/public folder uploaded." -ForegroundColor Green
+    $scpServerCommand = "scp -i `"$KeyFile`" `"$BackendPath\server.js`" ${Ec2User}@${Ec2Host}:${RemoteBackendPath}/"
+    Invoke-Expression $scpServerCommand
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to upload Back-End/server.js (exit code $LASTEXITCODE)"
+    }
+
+    Write-Host "SUCCESS: Fallback upload completed." -ForegroundColor Green
 }
 
-Write-Host "SUCCESS: Upload completed successfully!" -ForegroundColor Green
-
-# ---------------------------------------------------------
-# Restart Server on EC2
-# ---------------------------------------------------------
-Write-Host "Connecting to EC2 to restart the server..." -ForegroundColor Cyan
-
-# We use 'npx --yes pm2' to ensure we can run pm2 even if not in PATH or not installed globally.
-# 'pm2 restart' stops and starts the process.
-# If the process doesn't exist, we try to start it fresh.
-$remoteCommand = "npx --yes pm2 restart history-around || (cd /home/ubuntu/history-around/Back-End && npx --yes pm2 start server.js --name history-around)"
-
-$sshCommand = "ssh -i `"$KEY_FILE`" -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} `"$remoteCommand`""
-
-Invoke-Expression $sshCommand
+Write-Host "Restarting server on EC2..." -ForegroundColor Cyan
+$remoteRestartCommand = "npx --yes pm2 restart history-around || (cd $RemoteBackendPath && npx --yes pm2 start server.js --name history-around)"
+& ssh -i "$KeyFile" -o StrictHostKeyChecking=no ${Ec2User}@${Ec2Host} "$remoteRestartCommand"
 
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "SUCCESS: Server restarted successfully!" -ForegroundColor Green
+    Write-Host "SUCCESS: Deployment complete and server restarted." -ForegroundColor Green
 } else {
-    Write-Error "ERROR: Failed to restart server. Exit code: $LASTEXITCODE"
+    throw "Failed to restart server on EC2 (exit code $LASTEXITCODE)"
 }
