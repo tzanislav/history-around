@@ -99,6 +99,19 @@
                 }
             ];
 
+            function isValidLoaderResponse(response) {
+                if (!response || !response.ok) {
+                    return false;
+                }
+
+                var contentType = (response.headers.get('content-type') || '').toLowerCase();
+                if (contentType.indexOf('text/html') !== -1) {
+                    return false;
+                }
+
+                return true;
+            }
+
             function tryCandidate(index) {
                 if (index >= candidates.length) {
                     return Promise.resolve(null);
@@ -107,7 +120,7 @@
                 var candidate = candidates[index];
                 return fetch(buildUrl + candidate.loader, { method: 'HEAD' })
                     .then(function(response) {
-                        if (response.ok) {
+                        if (isValidLoaderResponse(response)) {
                             return candidate;
                         }
                         return tryCandidate(index + 1);
