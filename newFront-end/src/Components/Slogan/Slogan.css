@@ -1,0 +1,31 @@
+.slogan {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: #f5f7f8;
+  padding: 0 1.5rem;
+}
+
+.slogan__kicker {
+  margin: 0;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.8rem;
+  opacity: 0.95;
+}
+
+.slogan__headline {
+  margin: 0.8rem 0 0;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2.4rem, 9vw, 6.4rem);
+  line-height: 0.95;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  max-width: 12ch;
+}
+
+.slogan__emphasis {
+  color: #ffc978;
+}
