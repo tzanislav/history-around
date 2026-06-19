@@ -16,6 +16,70 @@
   background: #231f20;
 }
 
+.unity-viewer__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 15, 20, 0.58);
+  backdrop-filter: blur(1px);
+}
+
+.unity-viewer__overlay-card {
+  width: min(360px, 86vw);
+  padding: 1rem 1.15rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(9, 14, 20, 0.84);
+  color: #f0f4f7;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.34);
+}
+
+.unity-viewer__overlay-title {
+  margin: 0;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.84rem;
+}
+
+.unity-viewer__overlay-meta {
+  margin: 0.5rem 0 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.78rem;
+  opacity: 0.82;
+}
+
+.unity-viewer__progress-track {
+  margin-top: 0.7rem;
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.unity-viewer__progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f6b665, #f8d294);
+  transition: width 200ms ease;
+}
+
+.unity-viewer__retry {
+  margin-top: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f0f4f7;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
 .unity-viewer__controls {
   position: absolute;
   top: 0.8rem;
