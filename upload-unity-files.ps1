@@ -111,8 +111,9 @@ if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($remoteStatusOutp
 
 # Attempt remote pull after ensuring clean state
 & ssh -i "$KEY_FILE" -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} "$remotePullCommand"
+$remotePullSucceeded = ($LASTEXITCODE -eq 0)
 
-if ($LASTEXITCODE -ne 0) {
+if (-not $remotePullSucceeded) {
     Write-Warning "Remote git pull failed. Continuing with manual upload..."
 } else {
     Write-Host "SUCCESS: Remote repo updated." -ForegroundColor Green
@@ -188,6 +189,22 @@ Invoke-Expression $scpHtmlCommand
 if ($LASTEXITCODE -ne 0) {
     Write-Error "ERROR: unity-game.html upload failed with exit code $LASTEXITCODE"
     exit $LASTEXITCODE
+}
+
+# If remote git pull failed, ensure all web assets are synced, not only Unity files.
+if (-not $remotePullSucceeded) {
+    Write-Host "Remote pull failed earlier. Uploading full Back-End/public folder to ensure complete deployment..." -ForegroundColor Yellow
+    $PUBLIC_DIR_LOCAL = "Back-End\public"
+    $PUBLIC_DIR_REMOTE_PARENT = "/home/ubuntu/history-around/Back-End/"
+    $scpPublicCommand = "scp -i `"$KEY_FILE`" -r $PUBLIC_DIR_LOCAL ${EC2_USER}@${EC2_HOST}:${PUBLIC_DIR_REMOTE_PARENT}"
+    Invoke-Expression $scpPublicCommand
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "ERROR: Full public folder upload failed with exit code $LASTEXITCODE"
+        exit $LASTEXITCODE
+    }
+
+    Write-Host "SUCCESS: Full Back-End/public folder uploaded." -ForegroundColor Green
 }
 
 Write-Host "SUCCESS: Upload completed successfully!" -ForegroundColor Green
