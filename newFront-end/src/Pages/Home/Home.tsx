@@ -3,6 +3,7 @@ import Slogan from '../../Components/Slogan/Slogan'
 import SplitSection from '../../Components/SplitSection/SplitSection'
 import HeroModel from '../../Components/HeroModel/HeroModel'
 import NavBar from '../../Components/NavBar/NavBar'
+import { Link } from 'react-router-dom'
 import './Home.css'
 
 const HERO_VIDEO_URL =
@@ -17,7 +18,10 @@ function Home() {
         <VideoBackground source={HERO_VIDEO_URL} />
         <NavBar />
         <div className="home-page__hero-content">
-          <Slogan text="Discover the stories" emphasis="behind every place" />
+          <div className="home-page__hero-text">
+            <Slogan text="Discover the stories" emphasis="behind every place" />
+            <Link className="home-page__cta" to="/unity">Explore Now</Link>
+          </div>
           <HeroModel
             customModel={{
               modelPath: '/male.fbx',

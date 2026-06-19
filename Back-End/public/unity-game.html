@@ -81,23 +81,43 @@
         var progressBarFull = document.querySelector("#unity-progress-bar-full");
 
         var buildUrl = "/Build";
-        var loaderUrl = buildUrl + "/web.loader.js";
-        var config = {
-            dataUrl: buildUrl + "/web.data",
-            frameworkUrl: buildUrl + "/web.framework.js",
-            codeUrl: buildUrl + "/web.wasm",
-            streamingAssetsUrl: "StreamingAssets",
-            companyName: "Adimari Studio",
-            productName: "Real Vision of History Game",
-            productVersion: "1.0",
-            showBanner: false,
-        };
 
-        // Function to check if Unity files exist
-        function checkUnityFiles() {
-            return fetch(loaderUrl, { method: 'HEAD' })
-                .then(response => response.ok)
-                .catch(() => false);
+        // Resolve Unity file naming regardless of casing (Web.* vs web.*).
+        function resolveUnityPaths() {
+            var candidates = [
+                {
+                    loader: "/web.loader.js",
+                    data: "/web.data",
+                    framework: "/web.framework.js",
+                    code: "/web.wasm"
+                },
+                {
+                    loader: "/Web.loader.js",
+                    data: "/Web.data",
+                    framework: "/Web.framework.js",
+                    code: "/Web.wasm"
+                }
+            ];
+
+            function tryCandidate(index) {
+                if (index >= candidates.length) {
+                    return Promise.resolve(null);
+                }
+
+                var candidate = candidates[index];
+                return fetch(buildUrl + candidate.loader, { method: 'HEAD' })
+                    .then(function(response) {
+                        if (response.ok) {
+                            return candidate;
+                        }
+                        return tryCandidate(index + 1);
+                    })
+                    .catch(function() {
+                        return tryCandidate(index + 1);
+                    });
+            }
+
+            return tryCandidate(0);
         }
 
         if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
@@ -113,9 +133,9 @@
         }
 
         // Check if Unity files exist before loading
-        checkUnityFiles().then(filesExist => {
-            if (!filesExist) {
-                console.error('Unity loader not found at:', loaderUrl);
+        resolveUnityPaths().then((resolvedPaths) => {
+            if (!resolvedPaths) {
+                console.error('Unity loader not found in /Build (tried web.* and Web.* naming)');
                 loadingBar.style.display = "none";
                 container.innerHTML = '<div style="color: white; text-align: center; padding: 50px;"><h3>Unity Game Not Available</h3><p>Unity build files are missing. Please contact the administrator.</p></div>';
                 
@@ -127,6 +147,18 @@
                 }
                 return;
             }
+
+            var loaderUrl = buildUrl + resolvedPaths.loader;
+            var config = {
+                dataUrl: buildUrl + resolvedPaths.data,
+                frameworkUrl: buildUrl + resolvedPaths.framework,
+                codeUrl: buildUrl + resolvedPaths.code,
+                streamingAssetsUrl: "StreamingAssets",
+                companyName: "Adimari Studio",
+                productName: "Real Vision of History Game",
+                productVersion: "1.0",
+                showBanner: false,
+            };
 
             var script = document.createElement("script");
             script.src = loaderUrl;

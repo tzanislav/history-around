@@ -23,6 +23,31 @@
   width: min(1160px, 92%);
 }
 
+.home-page__hero-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.home-page__cta {
+  text-decoration: none;
+  color: #10202b;
+  background: #dfdfdf;
+  border: 1px solid rgba(16, 32, 43, 0.2);
+  padding: 1.0rem 3rem;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.home-page__cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(13, 28, 41, 0.28);
+}
+
 @media (max-width: 900px) {
   .home-page__hero-content {
     flex-direction: column;
