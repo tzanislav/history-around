@@ -1,0 +1,34 @@
+.unity-page {
+  min-height: 100vh;
+  padding: 1.4rem 1.2rem 2rem;
+  background: radial-gradient(circle at 20% 15%, #183748 0%, #0f2430 55%, #0b1a23 100%);
+}
+
+.unity-page__header {
+  width: min(1280px, 95vw);
+  margin: 0 auto 0.9rem;
+  color: #f4f8fb;
+}
+
+.unity-page__header h1 {
+  margin: 0.25rem 0 0.2rem;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2rem, 3.8vw, 3.2rem);
+  letter-spacing: 0.05em;
+}
+
+.unity-page__header p {
+  margin: 0;
+  max-width: 64ch;
+  font-family: 'Manrope', sans-serif;
+  line-height: 1.5;
+}
+
+.unity-page__back-link {
+  color: #f4f8fb;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(244, 248, 251, 0.6);
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}

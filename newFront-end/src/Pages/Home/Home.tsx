@@ -48,9 +48,9 @@ function Home() {
       </section>
             <section id="about3">
         <SplitSection
-          heading="Walk Through Time, One Street at a Time"
+          heading="Acheived through  a collaboration with the EU"
           paragraph="History Around reveals the stories hidden in landmarks, neighborhoods, and forgotten corners. From iconic monuments to overlooked streets, each location becomes a gateway into the past with context that is easy to explore and impossible to forget."
-          imageSrc="images/ar_2.jpg"
+          imageSrc="images/eu.jpg"
           imageAlt="Ancient city architecture overlooking a river"
         />
       </section>

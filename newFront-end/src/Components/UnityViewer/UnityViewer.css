@@ -1,0 +1,95 @@
+.unity-viewer {
+  position: relative;
+  width: min(1280px, 95vw);
+  height: min(78vh, 820px);
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #231f20;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28);
+}
+
+.unity-viewer__frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #231f20;
+}
+
+.unity-viewer__controls {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  z-index: 10;
+}
+
+.unity-viewer__toggle {
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #f0f4f7;
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.unity-viewer__toggle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.unity-viewer__panel {
+  margin-top: 0.4rem;
+  width: min(280px, 85vw);
+  background: rgba(9, 12, 16, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: #f0f4f7;
+  padding: 0.75rem;
+}
+
+.unity-viewer__section {
+  margin-bottom: 0.75rem;
+}
+
+.unity-viewer__section:last-child {
+  margin-bottom: 0;
+}
+
+.unity-viewer__section h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.82;
+}
+
+.unity-viewer__section button {
+  margin: 0.15rem 0.2rem 0.15rem 0;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.07);
+  color: #f0f4f7;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.unity-viewer__section--inline input {
+  margin: 0.15rem 0.2rem 0.15rem 0;
+  width: 72px;
+  padding: 0.28rem 0.4rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f0f4f7;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 900px) {
+  .unity-viewer {
+    width: 100%;
+    height: 72vh;
+    border-radius: 0;
+  }
+}
