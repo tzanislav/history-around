@@ -147,12 +147,13 @@ if (Test-Path $UnityBuildDest) {
     }
 }
 
-$remoteHashCommand = "mkdir -p $RemoteUnityBuildPath; cd $RemoteUnityBuildPath; for f in *; do if [ -f \"`$f\" ]; then sha256sum \"`$f\"; fi; done"
+$remoteHashCommand = 'mkdir -p ''{0}''; cd ''{0}''; for f in *; do if [ -f "$f" ]; then sha256sum "$f"; fi; done' -f $RemoteUnityBuildPath
 
 $remoteHashOutput = & ssh -i "$KeyFile" -o StrictHostKeyChecking=no ${Ec2User}@${Ec2Host} "$remoteHashCommand"
+$remoteHashExitCode = $LASTEXITCODE
 
 $remoteHashes = @{}
-if ($LASTEXITCODE -eq 0 -and $remoteHashOutput) {
+if ($remoteHashExitCode -eq 0 -and $remoteHashOutput) {
     $remoteHashOutput -split "`n" | ForEach-Object {
         $line = $_.Trim()
         if (-not $line) {
@@ -164,12 +165,12 @@ if ($LASTEXITCODE -eq 0 -and $remoteHashOutput) {
             $remoteHashes[$parts[1].Trim()] = $parts[0].Trim().ToLower()
         }
     }
-} elseif ($LASTEXITCODE -ne 0) {
-    Write-Warning "Failed to read remote Unity hashes (exit code $LASTEXITCODE). Uploading all Unity build files."
+} elseif ($remoteHashExitCode -ne 0) {
+    Write-Warning "Failed to read remote Unity hashes (exit code $remoteHashExitCode). Uploading all Unity build files."
 }
 
 $filesToUpload = @()
-if ($LASTEXITCODE -ne 0) {
+if ($remoteHashExitCode -ne 0) {
     $filesToUpload = $localHashes.Keys
 } else {
     $filesToUpload = $localHashes.Keys | Where-Object {
