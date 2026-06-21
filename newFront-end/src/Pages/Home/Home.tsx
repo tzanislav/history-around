@@ -37,7 +37,7 @@ function Home() {
       <section id="about">
         <SplitSection
           heading="Based on photogrammetric 3D scans of real-world locations"
-          paragraph="History Around reveals the stories hidden in landmarks, neighborhoods, and forgotten corners. From iconic monuments to overlooked streets, each location becomes a gateway into the past with context that is easy to explore and impossible to forget."
+          paragraph="HistoryARound starts with accurate 3D scans of existing landmarks and forgotten fragments, then transforms them into immersive historical scenes. Visitors can stand on site, look through their phone, and discover how a place once looked, who used it, and why it mattered."
           imageSrc="images/drone_1.jpg"
           imageAlt="Ancient city architecture overlooking a river"
         />
@@ -45,15 +45,15 @@ function Home() {
             <section id="about2">
         <SplitSection
           heading="Walk Through Time, One Street at a Time"
-          paragraph="History Around reveals the stories hidden in landmarks, neighborhoods, and forgotten corners. From iconic monuments to overlooked streets, each location becomes a gateway into the past with context that is easy to explore and impossible to forget."
+          paragraph="HistoryAround uses AR and 3D reconstruction to connect today’s streets with the worlds that came before them. Each digital layer becomes a link through time, revealing how a place looked, who lived there, and what stories still remain beneath the surface."
           imageSrc="images/street.jpg"
           imageAlt="Ancient city architecture overlooking a river"
         />
       </section>
             <section id="about3">
         <SplitSection
-          heading="Acheived through  a collaboration with the EU"
-          paragraph="History Around reveals the stories hidden in landmarks, neighborhoods, and forgotten corners. From iconic monuments to overlooked streets, each location becomes a gateway into the past with context that is easy to explore and impossible to forget."
+          heading="Made possible through European Union support"
+          paragraph="HistoryAround is developed with the support of EU funding to make cultural heritage more accessible, immersive, and easy to explore. The project combines 3D reconstruction, mobile technology, GPS positioning, and audio storytelling to create a new way of experiencing historic sites."
           imageSrc="images/eu.jpg"
           imageAlt="Ancient city architecture overlooking a river"
         />

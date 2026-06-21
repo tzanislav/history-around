@@ -14,7 +14,7 @@
 .nav-bar__logo {
   display: inline-flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 1.65rem;
   text-decoration: none;
 }
 
@@ -37,7 +37,7 @@
 .nav-bar__links {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 1.65rem;
 }
 
 .nav-bar__links a {
