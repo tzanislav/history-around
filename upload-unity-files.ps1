@@ -194,7 +194,7 @@ if ($filesToUpload.Count -eq 0) {
 }
 
 Write-Host "Restarting server on EC2..." -ForegroundColor Cyan
-$remoteRestartCommand = "npx --yes pm2 restart history-around || (cd $RemoteBackendPath && npx --yes pm2 start server.js --name history-around)"
+$remoteRestartCommand = "if npx --yes pm2 describe history-around >/dev/null 2>&1; then npx --yes pm2 restart history-around; else cd $RemoteBackendPath && npx --yes pm2 start server.js --name history-around; fi"
 & ssh -i "$KeyFile" -o StrictHostKeyChecking=no ${Ec2User}@${Ec2Host} "$remoteRestartCommand"
 
 if ($LASTEXITCODE -eq 0) {
