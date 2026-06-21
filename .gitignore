@@ -6,14 +6,13 @@ yarn-error.log*
 lerna-debug.log*
 
 # Front-End
-Front-End/history-around-web/node_modules/
-Front-End/history-around-web/dist/
-Front-End/history-around-web/public/Build/
-Front-End/history-around-web/.env
-Front-End/history-around-web/.env.local
-Front-End/history-around-web/.env.development.local
-Front-End/history-around-web/.env.test.local
-Front-End/history-around-web/.env.production.local
+newFront-end/node_modules/
+newFront-end/dist/
+newFront-end/.env
+newFront-end/.env.local
+newFront-end/.env.development.local
+newFront-end/.env.test.local
+newFront-end/.env.production.local
 
 # Back-End
 Back-End/node_modules/

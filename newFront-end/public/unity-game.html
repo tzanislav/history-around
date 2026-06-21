@@ -79,6 +79,7 @@
         var canvas = document.querySelector("#unity-canvas");
         var loadingBar = document.querySelector("#unity-loading-bar");
         var progressBarFull = document.querySelector("#unity-progress-bar-full");
+        var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
         var buildUrl = "/Build";
 
@@ -134,7 +135,12 @@
         }
 
         if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-            console.log('Mobile browser detected: using desktop Unity config path for compatibility.');
+            console.log('Mobile browser detected: using compatibility Unity config path.');
+        }
+
+        if (isIOS) {
+            // Reduce canvas memory pressure on iOS Safari to avoid reload loops.
+            config.devicePixelRatio = 1;
         }
 
         loadingBar.style.display = "block";
@@ -214,6 +220,13 @@
                     loadingBar.style.display = "none";
                     window.unityInstance = unityInstance;
 
+                    function notifyUnityOfResize() {
+                        // iOS Safari can restart WebGL when SetFullscreen(0) is called repeatedly.
+                        if (!isIOS) {
+                            unityInstance.SetFullscreen(0);
+                        }
+                    }
+
                     const isUnityFullscreen = () => {
                         return document.fullscreenElement === canvas
                             || document.fullscreenElement === container
@@ -229,8 +242,8 @@
                             }
                             canvas.style.width = width + "px";
                             canvas.style.height = height + "px";
-                            // Trigger Unity to recalculate its viewport
-                            unityInstance.SetFullscreen(0);
+                            // Trigger Unity to recalculate its viewport (non-iOS only).
+                            notifyUnityOfResize();
                         }
                     };
                     
@@ -259,8 +272,8 @@
                             canvas.style.width = `${newWidth}px`;
                             canvas.style.height = `${newHeight}px`;
 
-                            // Notify Unity of the resize
-                            unityInstance.SetFullscreen(0);
+                            // Notify Unity of the resize (non-iOS only).
+                            notifyUnityOfResize();
                         }
                     };
                     

@@ -17,7 +17,7 @@ $UnityHtmlDest = Join-Path $BackendPath "public\unity-game.html"
 
 $RemoteRepoPath = "/home/ubuntu/history-around"
 $RemoteBackendPath = "/home/ubuntu/history-around/Back-End"
-$RemotePublicParent = "/home/ubuntu/history-around/Back-End/"
+$RemoteUnityBuildPath = "/home/ubuntu/history-around/Back-End/public/Build"
 
 function Invoke-Step {
     param(
@@ -53,13 +53,10 @@ function Update-UnityBuildNames {
 
         if (Test-Path $sourcePath) {
             $item = Get-Item $sourcePath
-
-            # Already normalized with the desired case.
             if ($item.Name -ceq $canonicalName) {
                 continue
             }
 
-            # On Windows, case-only "copy" hits self-copy errors. Use a two-step rename.
             $tempName = "$canonicalName.casefix"
             $tempPath = Join-Path $BuildDirectory $tempName
 
@@ -75,12 +72,6 @@ function Update-UnityBuildNames {
 
 if (-not (Test-Path $KeyFile)) {
     throw "Key file '$KeyFile' not found in project root."
-}
-
-Invoke-Step "Installing front-end dependencies..." {
-    Push-Location $FrontendPath
-    npm install
-    Pop-Location
 }
 
 Invoke-Step "Building front-end (npm run build)..." {
@@ -118,47 +109,91 @@ if (Test-Path $UnityHtmlSource) {
 
 Write-Host "Syncing with GitHub (Local)..." -ForegroundColor Cyan
 git add .
-$timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-git commit -m "Auto-deploy: $timestamp"
 if ($LASTEXITCODE -ne 0) {
-    Write-Warning "No commit created (likely no changes). Continuing..."
+    throw "git add failed with exit code $LASTEXITCODE"
+}
+
+git diff --cached --quiet
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "No local changes to commit." -ForegroundColor Yellow
+} else {
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    git commit -m "Auto-deploy: $timestamp"
+    if ($LASTEXITCODE -ne 0) {
+        throw "git commit failed with exit code $LASTEXITCODE"
+    }
 }
 
 git push
 if ($LASTEXITCODE -ne 0) {
-    Write-Warning "Local git push failed. Deployment will continue with manual upload fallback if needed."
+    throw "git push failed with exit code $LASTEXITCODE"
 }
 
-Write-Host "Syncing with GitHub (Remote)..." -ForegroundColor Cyan
-$remotePullCommand = "cd $RemoteRepoPath && git pull"
-& ssh -i "$KeyFile" -o StrictHostKeyChecking=no ${Ec2User}@${Ec2Host} "$remotePullCommand"
-$remotePullSucceeded = ($LASTEXITCODE -eq 0)
+Write-Host "Syncing with GitHub (Remote) and ignoring remote local changes..." -ForegroundColor Cyan
+$remoteForceSyncCommand = "cd $RemoteRepoPath && git fetch origin main && git reset --hard origin/main && git clean -fd"
+& ssh -i "$KeyFile" -o StrictHostKeyChecking=no ${Ec2User}@${Ec2Host} "$remoteForceSyncCommand"
+if ($LASTEXITCODE -ne 0) {
+    throw "Remote git force sync failed with exit code $LASTEXITCODE"
+}
+Write-Host "SUCCESS: Remote repo forced to latest origin/main." -ForegroundColor Green
 
-if (-not $remotePullSucceeded) {
-    Write-Warning "Remote git pull failed. Forcing remote repo to match origin/main..."
-    $remoteForceSyncCommand = "cd $RemoteRepoPath && git fetch origin main && git reset --hard origin/main && git clean -fd"
-    & ssh -i "$KeyFile" -o StrictHostKeyChecking=no ${Ec2User}@${Ec2Host} "$remoteForceSyncCommand"
-    $remotePullSucceeded = ($LASTEXITCODE -eq 0)
+Write-Host "Uploading changed Unity Build files only..." -ForegroundColor Cyan
+
+$localHashes = @{}
+if (Test-Path $UnityBuildDest) {
+    Get-ChildItem -Path $UnityBuildDest -File | ForEach-Object {
+        $hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash.ToLower()
+        $localHashes[$_.Name] = $hash
+    }
 }
 
-if ($remotePullSucceeded) {
-    Write-Host "SUCCESS: Remote repo synced to latest main." -ForegroundColor Green
+$remoteHashCommand = @"
+mkdir -p $RemoteUnityBuildPath
+cd $RemoteUnityBuildPath
+for f in *; do
+  if [ -f \"`$f\" ]; then
+    sha256sum \"`$f\"
+  fi
+done
+"@
+
+$remoteHashOutput = & ssh -i "$KeyFile" -o StrictHostKeyChecking=no ${Ec2User}@${Ec2Host} "$remoteHashCommand"
+if ($LASTEXITCODE -ne 0) {
+    throw "Failed to read remote Unity hashes (exit code $LASTEXITCODE)"
+}
+
+$remoteHashes = @{}
+if ($remoteHashOutput) {
+    $remoteHashOutput -split "`n" | ForEach-Object {
+        $line = $_.Trim()
+        if (-not $line) {
+            return
+        }
+
+        $parts = $line -split "\s+", 2
+        if ($parts.Length -eq 2) {
+            $remoteHashes[$parts[1].Trim()] = $parts[0].Trim().ToLower()
+        }
+    }
+}
+
+$filesToUpload = $localHashes.Keys | Where-Object {
+    (-not $remoteHashes.ContainsKey($_)) -or ($remoteHashes[$_] -ne $localHashes[$_])
+}
+
+if ($filesToUpload.Count -eq 0) {
+    Write-Host "No Unity Build file changes detected. Skipping Unity upload." -ForegroundColor Green
 } else {
-    Write-Warning "Remote git sync failed. Uploading Back-End/public and server.js directly..."
-
-    $scpPublicCommand = "scp -i `"$KeyFile`" -r `"$BackendPath\public`" ${Ec2User}@${Ec2Host}:${RemotePublicParent}"
-    Invoke-Expression $scpPublicCommand
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to upload Back-End/public (exit code $LASTEXITCODE)"
+    foreach ($file in $filesToUpload) {
+        $localFilePath = Join-Path $UnityBuildDest $file
+        $scpFileCommand = "scp -i `"$KeyFile`" `"$localFilePath`" ${Ec2User}@${Ec2Host}:${RemoteUnityBuildPath}/"
+        Write-Host "Uploading: $file"
+        Invoke-Expression $scpFileCommand
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to upload Unity file '$file' (exit code $LASTEXITCODE)"
+        }
     }
-
-    $scpServerCommand = "scp -i `"$KeyFile`" `"$BackendPath\server.js`" ${Ec2User}@${Ec2Host}:${RemoteBackendPath}/"
-    Invoke-Expression $scpServerCommand
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to upload Back-End/server.js (exit code $LASTEXITCODE)"
-    }
-
-    Write-Host "SUCCESS: Fallback upload completed." -ForegroundColor Green
+    Write-Host "SUCCESS: Changed Unity Build files uploaded." -ForegroundColor Green
 }
 
 Write-Host "Restarting server on EC2..." -ForegroundColor Cyan
