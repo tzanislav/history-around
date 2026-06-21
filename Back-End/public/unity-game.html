@@ -1,383 +1,41 @@
 <!DOCTYPE html>
 <html lang="en-us">
-<head>
+  <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Real Vision of History Unity Game</title>
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background: #231F20;
-        }
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-        #unity-container {
-            position: relative;
-            width: 100%;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        canvas {
-            background: #231F20;
-            display: block;
-        }
-        #unity-loading-bar {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            display: none;
-        }
-        #unity-logo {
-            width: 154px;
-            height: 130px;
-            background: url('data:image/png;base64,') no-repeat center / contain;
-        }
-        #unity-progress-bar-empty {
-            width: 141px;
-            height: 18px;
-            margin-top: 10px;
-            background: url('data:image/png;base64,') no-repeat center / contain;
-        }
-        #unity-progress-bar-full {
-            width: 0%;
-            height: 18px;
-            margin-top: 10px;
-            background: url('data:image/png;base64,') no-repeat center / contain;
-        }
-        #unity-footer {
-            position: relative;
-            margin-top: 5px;
-        }
-        .unity-mobile #unity-container {
-            width: 100vw;
-            height: 100vh;
-        }
-    </style>
-</head>
-<body>
-    <div id="unity-container" class="unity-desktop">
-        <canvas id="unity-canvas" width={960} height={600}></canvas>
-        <div id="unity-loading-bar">
-            <div id="unity-logo"></div>
-            <div id="unity-progress-bar-empty">
-                <div id="unity-progress-bar-full"></div>
-            </div>
-        </div>
-    </div>
+    <title>Unity Web Player | HistoryAround</title>
+  </head>
+  <body style="text-align: center; padding: 0; border: 0; margin: 0;">
+    <canvas id="unity-canvas" width=1200 height=800 tabindex="-1" style="width: 1200px; height: 800px; background: #231F20"></canvas>
+    <script src="Build/Web.loader.js"></script>
     <script>
-        var container = document.querySelector("#unity-container");
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // Mobile device style: fill the whole browser client area with the game canvas:
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+
         var canvas = document.querySelector("#unity-canvas");
-        var loadingBar = document.querySelector("#unity-loading-bar");
-        var progressBarFull = document.querySelector("#unity-progress-bar-full");
-        var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+        canvas.style.position = "fixed";
 
-        function formatConsoleArg(arg) {
-            if (typeof arg === 'string') {
-                return arg;
-            }
+        document.body.style.textAlign = "left";
+      }
 
-            if (arg && arg.stack) {
-                return String(arg.stack);
-            }
-
-            try {
-                return JSON.stringify(arg);
-            } catch (_) {
-                return String(arg);
-            }
-        }
-
-        function postConsoleToParent(level, argsLike) {
-            if (window.parent === window) {
-                return;
-            }
-
-            var args = Array.prototype.slice.call(argsLike);
-            window.parent.postMessage(
-                {
-                    type: 'UNITY_CONSOLE',
-                    payload: {
-                        level: level,
-                        message: args.map(formatConsoleArg).join(' '),
-                    },
-                },
-                '*'
-            );
-        }
-
-        (function interceptConsole() {
-            var levels = ['log', 'info', 'warn', 'error'];
-
-            levels.forEach(function(level) {
-                var original = console[level];
-                console[level] = function() {
-                    postConsoleToParent(level, arguments);
-                    original.apply(console, arguments);
-                };
-            });
-
-            window.addEventListener('error', function(event) {
-                postConsoleToParent('error', [event.message, event.filename ? 'at ' + event.filename + ':' + event.lineno : '']);
-            });
-
-            window.addEventListener('unhandledrejection', function(event) {
-                postConsoleToParent('error', ['UnhandledPromiseRejection', event.reason]);
-            });
-        })();
-
-        var buildUrl = "/Build";
-
-        // Resolve Unity file naming regardless of casing (Web.* vs web.*).
-        function resolveUnityPaths() {
-            var candidates = [
-                {
-                    loader: "/web.loader.js",
-                    data: "/web.data",
-                    framework: "/web.framework.js",
-                    code: "/web.wasm"
-                },
-                {
-                    loader: "/Web.loader.js",
-                    data: "/Web.data",
-                    framework: "/Web.framework.js",
-                    code: "/Web.wasm"
-                }
-            ];
-
-            function isValidLoaderResponse(response) {
-                if (!response || !response.ok) {
-                    return false;
-                }
-
-                var contentType = (response.headers.get('content-type') || '').toLowerCase();
-                if (contentType.indexOf('text/html') !== -1) {
-                    return false;
-                }
-
-                return true;
-            }
-
-            function tryCandidate(index) {
-                if (index >= candidates.length) {
-                    return Promise.resolve(null);
-                }
-
-                var candidate = candidates[index];
-                return fetch(buildUrl + candidate.loader, { method: 'HEAD' })
-                    .then(function(response) {
-                        if (isValidLoaderResponse(response)) {
-                            return candidate;
-                        }
-                        return tryCandidate(index + 1);
-                    })
-                    .catch(function() {
-                        return tryCandidate(index + 1);
-                    });
-            }
-
-            return tryCandidate(0);
-        }
-
-        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-            console.log('Mobile browser detected: using compatibility Unity config path.');
-        }
-
-        loadingBar.style.display = "block";
-
-        // Notify parent that Unity is starting to load
-        if (window.parent !== window) {
-            window.parent.postMessage({ type: 'UNITY_LOADING_START' }, '*');
-        }
-
-        // Check if Unity files exist before loading
-        resolveUnityPaths().then((resolvedPaths) => {
-            if (!resolvedPaths) {
-                console.error('Unity loader not found in /Build (tried web.* and Web.* naming)');
-                loadingBar.style.display = "none";
-                container.innerHTML = '<div style="color: white; text-align: center; padding: 50px;"><h3>Unity Game Not Available</h3><p>Unity build files are missing. Please contact the administrator.</p></div>';
-                
-                if (window.parent !== window) {
-                    window.parent.postMessage({ 
-                        type: 'UNITY_LOADING_ERROR', 
-                        error: 'Unity files not found on server' 
-                    }, '*');
-                }
-                return;
-            }
-
-            var loaderUrl = buildUrl + resolvedPaths.loader;
-            var config = {
-                dataUrl: buildUrl + resolvedPaths.data,
-                frameworkUrl: buildUrl + resolvedPaths.framework,
-                codeUrl: buildUrl + resolvedPaths.code,
-                streamingAssetsUrl: "StreamingAssets",
-                companyName: "Adimari Studio",
-                productName: "Real Vision of History Game",
-                productVersion: "1.0",
-                showBanner: false,
-            };
-
-            if (isIOS) {
-                // Reduce canvas memory pressure on iOS Safari to avoid reload loops.
-                config.devicePixelRatio = 1;
-            }
-
-            var script = document.createElement("script");
-            script.src = loaderUrl;
-            script.onerror = (error) => {
-                console.error('Failed to load Unity loader:', error);
-                loadingBar.style.display = "none";
-                container.innerHTML = '<div style="color: white; text-align: center; padding: 50px;"><h3>Unity Loading Error</h3><p>Failed to load Unity game files.</p></div>';
-                
-                if (window.parent !== window) {
-                    window.parent.postMessage({ 
-                        type: 'UNITY_LOADING_ERROR', 
-                        error: 'Failed to load Unity loader script' 
-                    }, '*');
-                }
-            };
-            script.onload = () => {
-                if (typeof createUnityInstance === 'undefined') {
-                    console.error('createUnityInstance is not defined after loading script');
-                    loadingBar.style.display = "none";
-                    container.innerHTML = '<div style="color: white; text-align: center; padding: 50px;"><h3>Unity Error</h3><p>Unity loader script is invalid.</p></div>';
-                    
-                    if (window.parent !== window) {
-                        window.parent.postMessage({ 
-                            type: 'UNITY_LOADING_ERROR', 
-                            error: 'createUnityInstance is not defined' 
-                        }, '*');
-                    }
-                    return;
-                }
-
-                createUnityInstance(canvas, config, (progress) => {
-                    progressBarFull.style.width = 100 * progress + "%";
-                    // Send progress updates to parent
-                    if (window.parent !== window) {
-                        window.parent.postMessage({ 
-                            type: 'UNITY_LOADING_PROGRESS', 
-                            progress: progress 
-                        }, '*');
-                    }
-                }).then((unityInstance) => {
-                    loadingBar.style.display = "none";
-                    window.unityInstance = unityInstance;
-
-                    function notifyUnityOfResize() {
-                        // iOS Safari can restart WebGL when SetFullscreen(0) is called repeatedly.
-                        if (!isIOS) {
-                            unityInstance.SetFullscreen(0);
-                        }
-                    }
-
-                    const isUnityFullscreen = () => {
-                        return document.fullscreenElement === canvas
-                            || document.fullscreenElement === container
-                            || document.webkitFullscreenElement === canvas
-                            || document.webkitFullscreenElement === container;
-                    };
-                    
-                    // Add resize functionality
-                    window.resizeUnity = function(width, height) {
-                        if (unityInstance && canvas) {
-                            if (isUnityFullscreen()) {
-                                return; // Avoid exiting fullscreen on manual resize
-                            }
-                            canvas.style.width = width + "px";
-                            canvas.style.height = height + "px";
-                            // Trigger Unity to recalculate its viewport (non-iOS only).
-                            notifyUnityOfResize();
-                        }
-                    };
-                    
-                    // Add responsive resize function with orientation-based ratio and max dimension 1200px
-                    window.resizeUnityToContainer = function() {
-                        if (unityInstance && canvas) {
-                            if (isUnityFullscreen()) {
-                                return; // Skip auto-resize while fullscreen is active
-                            }
-                            const container = document.getElementById('unity-container');
-                            const rect = container.getBoundingClientRect();
-                            const isLandscape = rect.width >= rect.height;
-                            const targetRatio = isLandscape ? (4 / 3) : (9 / 12); // width / height
-
-                            const maxWidth = Math.min(rect.width, window.innerWidth, 1200);
-                            const maxHeight = Math.min(rect.height, window.innerHeight, 1200);
-
-                            let newWidth = maxWidth;
-                            let newHeight = newWidth / targetRatio;
-
-                            if (newHeight > maxHeight) {
-                                newHeight = maxHeight;
-                                newWidth = newHeight * targetRatio;
-                            }
-
-                            canvas.style.width = `${newWidth}px`;
-                            canvas.style.height = `${newHeight}px`;
-
-                            // Notify Unity of the resize (non-iOS only).
-                            notifyUnityOfResize();
-                        }
-                    };
-                    
-                    // Add fullscreen toggle
-                    window.toggleUnityFullscreen = function() {
-                        if (unityInstance) {
-                            unityInstance.SetFullscreen(1);
-                        }
-                    };
-                    
-                    // Listen for resize commands from parent window
-                    window.addEventListener('message', function(event) {
-                        if (event.data.type === 'RESIZE_UNITY') {
-                            if (event.data.width && event.data.height) {
-                                window.resizeUnity(event.data.width, event.data.height);
-                            } else {
-                                window.resizeUnityToContainer();
-                            }
-                        } else if (event.data.type === 'TOGGLE_FULLSCREEN') {
-                            window.toggleUnityFullscreen();
-                        }
-                    });
-                    
-                    // Auto-resize on window resize
-                    window.addEventListener('resize', function() {
-                        setTimeout(window.resizeUnityToContainer, 100);
-                    });
-                    
-                    // Initial responsive resize
-                    setTimeout(window.resizeUnityToContainer, 500);
-                    
-                    // Notify parent that Unity has finished loading
-                    if (window.parent !== window) {
-                        window.parent.postMessage({ type: 'UNITY_LOADING_COMPLETE' }, '*');
-                    }
-                }).catch((message) => {
-                    // Notify parent of loading error
-                    if (window.parent !== window) {
-                        window.parent.postMessage({ 
-                            type: 'UNITY_LOADING_ERROR', 
-                            error: message 
-                        }, '*');
-                    }
-                    console.error('Unity loading failed:', message);
-                    loadingBar.style.display = "none";
-                    container.innerHTML = '<div style="color: white; text-align: center; padding: 50px;"><h3>Unity Loading Failed</h3><p>' + message + '</p></div>';
-                });
-            };
-            document.body.appendChild(script);
-        });
+      createUnityInstance(document.querySelector("#unity-canvas"), {
+        arguments: [],
+        dataUrl: "Build/Web.data",
+        frameworkUrl: "Build/Web.framework.js",
+        codeUrl: "Build/Web.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "AdimariStudio ltd.",
+        productName: "HistoryAround",
+        productVersion: "632",
+        // matchWebGLToCanvasSize: false, // Uncomment this to separately control WebGL canvas render size and DOM element size.
+        // devicePixelRatio: 1, // Uncomment this to override low DPI rendering on high DPI displays.
+      });
     </script>
-</body>
+  </body>
 </html>
