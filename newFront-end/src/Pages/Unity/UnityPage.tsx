@@ -99,7 +99,7 @@ function UnityPage() {
 
     return (
         <main className="unity-page">
-            <NavBar />
+            <NavBar className="unity-page__nav" />
             <UnityViewer autoResize />
 
             <footer className="unity-page__footer">

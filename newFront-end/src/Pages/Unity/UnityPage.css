@@ -4,6 +4,22 @@
   background: radial-gradient(circle at 20% 15%, #183748 0%, #0f2430 55%, #0b1a23 100%);
 }
 
+.unity-page__nav {
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  width: min(1280px, 95vw);
+  margin: 0 auto 1rem;
+  padding: 0;
+}
+
+.unity-page__nav .nav-bar__links a,
+.unity-page__nav .nav-bar__logo-text,
+.unity-page__nav .nav-bar__logo-mark {
+  color: #f4f8fb;
+}
+
 .unity-page__footer {
   width: min(1280px, 95vw);
   margin: 0.85rem auto 0;

@@ -1,0 +1,113 @@
+.contacts-page {
+  min-height: 100vh;
+  padding: 5.8rem 1.2rem 2rem;
+  background: linear-gradient(160deg, #152630 0%, #1f313d 100%);
+}
+
+.contacts-container {
+  width: min(980px, 95vw);
+  margin: 0 auto;
+  color: #eef2f4;
+}
+
+.contacts-title {
+  margin: 0 0 1.6rem;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  letter-spacing: 0.07em;
+  text-align: center;
+}
+
+.contacts-content {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.contact-info {
+  text-align: center;
+}
+
+.contact-info h3 {
+  margin: 0;
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.06em;
+  font-size: clamp(1.4rem, 2.2vw, 1.9rem);
+}
+
+.contact-info p {
+  margin: 0.65rem auto 0;
+  max-width: 72ch;
+  line-height: 1.7;
+  font-family: 'Manrope', sans-serif;
+}
+
+.contact-methods {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.contact-item,
+.contact-form {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 1.15rem;
+}
+
+.contact-item h4,
+.contact-form h3 {
+  margin: 0;
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.06em;
+  font-size: 1.15rem;
+}
+
+.contact-item p {
+  margin: 0.55rem 0 0;
+  line-height: 1.55;
+  font-family: 'Manrope', sans-serif;
+}
+
+.contact-form form {
+  margin-top: 0.9rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.form-input,
+.form-textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(0, 0, 0, 0.16);
+  color: #eef2f4;
+  padding: 0.7rem 0.8rem;
+  font-family: 'Manrope', sans-serif;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: rgba(238, 242, 244, 0.68);
+}
+
+.form-button {
+  justify-self: start;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.12);
+  color: #eef2f4;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.6rem 1.05rem;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .contacts-page {
+    padding-top: 7.6rem;
+  }
+
+  .contact-methods {
+    grid-template-columns: 1fr;
+  }
+}
