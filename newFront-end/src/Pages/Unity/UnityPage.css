@@ -4,6 +4,30 @@
   background: radial-gradient(circle at 20% 15%, #183748 0%, #0f2430 55%, #0b1a23 100%);
 }
 
+.unity-page__footer {
+  width: min(1280px, 95vw);
+  margin: 0.85rem auto 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.unity-page__console-toggle {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  color: #f4f8fb;
+  font-family: 'Manrope', sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.74rem;
+  padding: 0.42rem 0.9rem;
+  cursor: pointer;
+}
+
+.unity-page__console-toggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
 .unity-page__header {
   width: min(1280px, 95vw);
   margin: 0 auto 0.9rem;

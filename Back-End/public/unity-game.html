@@ -81,6 +81,60 @@
         var progressBarFull = document.querySelector("#unity-progress-bar-full");
         var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+        function formatConsoleArg(arg) {
+            if (typeof arg === 'string') {
+                return arg;
+            }
+
+            if (arg && arg.stack) {
+                return String(arg.stack);
+            }
+
+            try {
+                return JSON.stringify(arg);
+            } catch (_) {
+                return String(arg);
+            }
+        }
+
+        function postConsoleToParent(level, argsLike) {
+            if (window.parent === window) {
+                return;
+            }
+
+            var args = Array.prototype.slice.call(argsLike);
+            window.parent.postMessage(
+                {
+                    type: 'UNITY_CONSOLE',
+                    payload: {
+                        level: level,
+                        message: args.map(formatConsoleArg).join(' '),
+                    },
+                },
+                '*'
+            );
+        }
+
+        (function interceptConsole() {
+            var levels = ['log', 'info', 'warn', 'error'];
+
+            levels.forEach(function(level) {
+                var original = console[level];
+                console[level] = function() {
+                    postConsoleToParent(level, arguments);
+                    original.apply(console, arguments);
+                };
+            });
+
+            window.addEventListener('error', function(event) {
+                postConsoleToParent('error', [event.message, event.filename ? 'at ' + event.filename + ':' + event.lineno : '']);
+            });
+
+            window.addEventListener('unhandledrejection', function(event) {
+                postConsoleToParent('error', ['UnhandledPromiseRejection', event.reason]);
+            });
+        })();
+
         var buildUrl = "/Build";
 
         // Resolve Unity file naming regardless of casing (Web.* vs web.*).
@@ -138,11 +192,6 @@
             console.log('Mobile browser detected: using compatibility Unity config path.');
         }
 
-        if (isIOS) {
-            // Reduce canvas memory pressure on iOS Safari to avoid reload loops.
-            config.devicePixelRatio = 1;
-        }
-
         loadingBar.style.display = "block";
 
         // Notify parent that Unity is starting to load
@@ -177,6 +226,11 @@
                 productVersion: "1.0",
                 showBanner: false,
             };
+
+            if (isIOS) {
+                // Reduce canvas memory pressure on iOS Safari to avoid reload loops.
+                config.devicePixelRatio = 1;
+            }
 
             var script = document.createElement("script");
             script.src = loaderUrl;

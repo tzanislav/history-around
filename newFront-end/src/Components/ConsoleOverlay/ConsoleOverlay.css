@@ -1,0 +1,96 @@
+.console-overlay {
+  position: fixed;
+  left: 1rem;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 60;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(9, 13, 18, 0.94);
+  color: #e6edf3;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.45);
+  max-height: min(48vh, 420px);
+  display: flex;
+  flex-direction: column;
+}
+
+.console-overlay__header {
+  padding: 0.7rem 0.8rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.console-overlay__header h2 {
+  margin: 0;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: 'Manrope', sans-serif;
+  color: #f3f6f8;
+}
+
+.console-overlay__actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.console-overlay__actions button {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  color: #e6edf3;
+  font-size: 0.72rem;
+  padding: 0.25rem 0.65rem;
+  cursor: pointer;
+}
+
+.console-overlay__body {
+  overflow: auto;
+  padding: 0.65rem 0.8rem 0.8rem;
+  display: grid;
+  gap: 0.35rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+  font-size: 0.75rem;
+}
+
+.console-overlay__line {
+  display: grid;
+  gap: 0.15rem;
+  border-left: 3px solid rgba(255, 255, 255, 0.24);
+  padding-left: 0.5rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.console-overlay__meta {
+  color: rgba(230, 237, 243, 0.75);
+  font-size: 0.68rem;
+}
+
+.console-overlay__line--warn {
+  border-left-color: #f7c46c;
+}
+
+.console-overlay__line--error {
+  border-left-color: #ff8d8d;
+}
+
+.console-overlay__line--info {
+  border-left-color: #83d2ff;
+}
+
+.console-overlay__empty {
+  margin: 0;
+  color: rgba(230, 237, 243, 0.75);
+}
+
+@media (max-width: 900px) {
+  .console-overlay {
+    left: 0.6rem;
+    right: 0.6rem;
+    bottom: 0.6rem;
+    max-height: 52vh;
+  }
+}
