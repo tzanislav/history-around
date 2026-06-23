@@ -13,6 +13,15 @@ const LOGS_TOKEN = process.env.LOGS_TOKEN || '';
 const LOGS_FLUSH_INTERVAL_MS = 1000;
 const LOGS_BATCH_SIZE = 50;
 const MAX_RECENT_REQUESTS = 400;
+const SENSITIVE_PATH_PATTERNS = [
+    /^\/\.git(?:\/|$)/i,
+    /^\/\.env(?:$|\.)/i,
+    /^\/\.svn(?:\/|$)/i,
+    /^\/\.hg(?:\/|$)/i,
+    /^\/wp-admin(?:\/|$)/i,
+    /^\/wp-login\.php$/i,
+    /^\/xmlrpc\.php$/i,
+];
 
 // Check if public directory exists
 const publicPath = path.join(__dirname, 'public');
@@ -57,6 +66,20 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+function isSensitiveProbePath(requestPath) {
+    if (typeof requestPath !== 'string') {
+        return false;
+    }
+
+    const normalized = requestPath.toLowerCase();
+    if (SENSITIVE_PATH_PATTERNS.some((pattern) => pattern.test(normalized))) {
+        return true;
+    }
+
+    // Hidden path segments (e.g. /.git/HEAD) should never resolve to SPA shell.
+    return normalized.split('/').some((segment) => segment.startsWith('.') && segment.length > 1);
 }
 
 function queueRequestLog(entry) {
@@ -322,36 +345,37 @@ app.get('/logs', (req, res) => {
 
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.send(`<!doctype html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>History Around Request Logs</title>
-        <style>
-            body { background:#0f1720; color:#e8eef4; margin:0; font:14px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-            main { padding:16px; }
-            h1 { margin:0 0 8px; font-size:18px; }
-            p { margin:0 0 14px; color:#9fb3c3; }
-            .meta { margin-bottom:12px; color:#9fb3c3; }
-            .logs { background:#0b1118; border:1px solid #1e2c39; border-radius:8px; padding:10px; max-height:78vh; overflow:auto; }
-            .logs div { padding:2px 0; border-bottom:1px dotted #1a2632; white-space:pre-wrap; word-break:break-word; }
-            .logs div:last-child { border-bottom:none; }
-            .line--allowed { color:#9be9a8; }
-            .line--blocked { color:#ffb86b; }
-            .line--server-error { color:#ff8a8a; }
-            .legend { margin:0 0 8px; color:#9fb3c3; font-size:12px; }
-        </style>
-    </head>
-    <body>
-        <main>
-            <h1>History Around Request Logs</h1>
-            <p class="meta">Showing latest ${limit} requests from in-memory buffer. File path: ${escapeHtml(requestLogFilePath)}</p>
-            ${authNote}
-            <p class="legend">Green = allowed | Orange = blocked (400/403/405/414/429) | Red = server errors (5xx)</p>
-            <div class="logs">${rows || '<div>No requests logged yet.</div>'}</div>
-        </main>
-    </body>
-</html>`);
+            <html lang="en">
+                <head>
+                    <meta charset="utf-8" />
+                    <meta name="viewport" content="width=device-width, initial-scale=1" />
+                    <title>History Around Request Logs</title>
+                    <style>
+                        body { background:#0f1720; color:#e8eef4; margin:0; font:14px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+                        main { padding:16px; }
+                        h1 { margin:0 0 8px; font-size:18px; }
+                        p { margin:0 0 14px; color:#9fb3c3; }
+                        .meta { margin-bottom:12px; color:#9fb3c3; }
+                        .logs { background:#0b1118; border:1px solid #1e2c39; border-radius:8px; padding:10px; max-height:78vh; overflow:auto; }
+                        .logs div { padding:2px 0; border-bottom:1px dotted #1a2632; white-space:pre-wrap; word-break:break-word; }
+                        .logs div:last-child { border-bottom:none; }
+                        .line--allowed { color:#9be9a8; }
+                        .line--blocked { color:#ffb86b; }
+                        .line--server-error { color:#ff8a8a; }
+                        .legend { margin:0 0 8px; color:#9fb3c3; font-size:12px; }
+                    </style>
+                </head>
+                <body>
+                    <main>
+                        <h1>History Around Request Logs</h1>
+                        <p class="meta">Showing latest ${limit} requests from in-memory buffer. File path: ${escapeHtml(requestLogFilePath)}</p>
+                        ${authNote}
+                        <p class="legend">Green = allowed | Orange = blocked (400/403/405/414/429) | Red = server errors (5xx)</p>
+                        <div class="logs">${rows || '<div>No requests logged yet.</div>'}</div>
+                        <div class="meta">Last updated: ${new Date().toISOString()}</div>
+                    </main>
+                </body>
+            </html>`);
 });
 
 // Handle React routing - serve React app for all non-API routes
@@ -364,7 +388,7 @@ app.use((req, res, next) => {
     // Do not serve index.html for asset/file requests.
     // This avoids returning HTML for missing JS/WASM paths (e.g., Unity loader files).
     const hasFileExtension = path.extname(req.path) !== '';
-    if (hasFileExtension || req.path.startsWith('/Build/')) {
+    if (hasFileExtension || req.path.startsWith('/Build/') || isSensitiveProbePath(req.path)) {
         return res.status(404).json({
             error: 'Asset not found',
             path: req.path,
