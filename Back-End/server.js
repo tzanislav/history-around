@@ -304,8 +304,16 @@ app.get('/logs', (req, res) => {
 
         const latest = recentRequests.slice(-limit).reverse();
         const rows = latest.map((entry) => {
-                const line = `${entry.timestamp} | ${entry.ip} | ${entry.method} | ${entry.path} | ${entry.status} | ${entry.durationMs.toFixed(1)}ms | ua=\"${entry.userAgent}\"`;
-                return `<div>${escapeHtml(line)}</div>`;
+            const line = `${entry.timestamp} | ${entry.ip} | ${entry.method} | ${entry.path} | ${entry.status} | ${entry.durationMs.toFixed(1)}ms | ua=\"${entry.userAgent}\"`;
+
+            let outcomeClass = 'line--allowed';
+            if ([400, 403, 405, 414, 429].includes(entry.status)) {
+                outcomeClass = 'line--blocked';
+            } else if (entry.status >= 500) {
+                outcomeClass = 'line--server-error';
+            }
+
+            return `<div class="${outcomeClass}">${escapeHtml(line)}</div>`;
         }).join('');
 
         const authNote = LOGS_TOKEN
@@ -328,6 +336,10 @@ app.get('/logs', (req, res) => {
             .logs { background:#0b1118; border:1px solid #1e2c39; border-radius:8px; padding:10px; max-height:78vh; overflow:auto; }
             .logs div { padding:2px 0; border-bottom:1px dotted #1a2632; white-space:pre-wrap; word-break:break-word; }
             .logs div:last-child { border-bottom:none; }
+            .line--allowed { color:#9be9a8; }
+            .line--blocked { color:#ffb86b; }
+            .line--server-error { color:#ff8a8a; }
+            .legend { margin:0 0 8px; color:#9fb3c3; font-size:12px; }
         </style>
     </head>
     <body>
@@ -335,6 +347,7 @@ app.get('/logs', (req, res) => {
             <h1>History Around Request Logs</h1>
             <p class="meta">Showing latest ${limit} requests from in-memory buffer. File path: ${escapeHtml(requestLogFilePath)}</p>
             ${authNote}
+            <p class="legend">Green = allowed | Orange = blocked (400/403/405/414/429) | Red = server errors (5xx)</p>
             <div class="logs">${rows || '<div>No requests logged yet.</div>'}</div>
         </main>
     </body>
